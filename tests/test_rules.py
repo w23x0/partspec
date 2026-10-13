@@ -147,6 +147,12 @@ def test_SCH_007_pin_numbers_are_strings(path):
         assert isinstance(item["number"], str), f"{path.parent.name}: pin {item['number']!r} is not a string"
 
 
+def test_SCH_007_an_integer_pin_number_fails_the_load():
+    """The loader used to coerce an integer to a string; SCH-007 is a MUST, so the load now fails."""
+    data = mutated(lambda d: d["pins"][2].update(number=7))
+    assert "schema.invalid" in failing_ids(data)
+
+
 # --- SRC-001..005: the quote checker, exercised on synthetic page text (no PDF needed) ------------------
 
 PAGES = ["first page  text", "IN1–   5    2    I   Negative input\nmore"]

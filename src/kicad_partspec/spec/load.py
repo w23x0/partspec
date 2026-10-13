@@ -84,10 +84,13 @@ def _dimension(c: _Collector, raw: Any, path: str) -> Dimension:
 def _pin(c: _Collector, raw: Any, path: str) -> Pin:
     pin = c.obj(raw, path)
     number = pin.get("number")
-    if isinstance(number, int) and not isinstance(number, bool):
-        number = str(number)
     if not isinstance(number, str) or not number.strip():
-        c.error(f"{path}.number", f"{path}.number must be a non-empty string or integer", "string", number)
+        c.error(
+            f"{path}.number",
+            f'{path}.number must be a quoted string (SCH-007): an integer like 7 is not a pin number, write "7"',
+            "string",
+            number,
+        )
         number = ""
     alt = pin.get("alt_names", [])
     if not isinstance(alt, list) or not all(isinstance(item, str) for item in alt):

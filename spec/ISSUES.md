@@ -109,7 +109,11 @@
   改口径，文案保持现状。
 - 证据：reference.md:31、spec/rules.json:88-92、src/kicad_partspec/spec/load.py:86-91、上述实测输出。
 - 建议：A 会改变 loader 行为（原先通过的 JSON 输入开始失败），需人类拍板；无论哪种都要给检查器补测试。
-- 状态：open（来源：round 1 独立审计，已由主会话实测复现）
+- 状态：settled（读法 A，2026-10-13 主会话执行：用户明确不再代为裁定，授权自行推动）——
+  `src/kicad_partspec/spec/load.py` 不再把整数转字符串，直接报 `schema.invalid`（文案含
+  SCH-007 与修复示例）；新增 `tests/test_rules.py::test_SCH_007_an_integer_pin_number_fails_the_load`
+  （用审计员实测的输入复现：pins[0].number=77 现零 findings 变为 schema 失败）。已确认 23 gold
+  与 evals/runs 全部运行均无整数引号，历史记分不受影响。
 
 ## DIM-003 "labelled GAGE PLANE" 两种读法，两个 gold 各占一边
 - 现象：reference.md:122-123："A boxed basic dimension, or one labelled `GAGE PLANE`, is a reference plane

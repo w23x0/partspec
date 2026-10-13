@@ -57,7 +57,6 @@ gold-spec: 23/23   gold-quotes: skipped   gold-build: 23/23 (20 mods, 3 skipped)
 2. **open 议题的主会话推进**（用户 2026-10-13 明确不再代为裁定，授权自行推动；含金标改动的
    仍走 [GOLD] 协议）：
    - MPN-001：6 个 gold 的 mpn 不是印刷 orderable，需 PDF 核 addendum 后才能按 A 或 B 定；
-   - SCH-007：loader 把整数引脚号转字符串，MUST 不执行——可自行按 A 改 loader 并补检查器测试；
    - LAND-001 / PIN-004 / PIN-005 / DIM-001 / DIM-003：措辞与测试口径对齐（改既有断言需谨慎，
      每条先落 ISSUES.md 证据再动）；
    - PIN-001：EP 命名与 gold 的 PAD/DAP 分歧，需重印引脚表证据。
