@@ -148,7 +148,7 @@
       "id": "DIM-004",
       "level": "MUST",
       "statement": "A parenthesised reference value never becomes a package dimension; it may be used for a land_* value, and a boxed BASIC value belongs to the land pattern.",
-      "spec": "skills/partspec/reference.md · parenthesised-values paragraph"
+      "spec": "src/kicad_partspec/verify/spec_checks.py · check_reference_dimensions"
     },
     {
       "id": "DIM-005",

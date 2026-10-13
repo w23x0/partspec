@@ -49,13 +49,15 @@
   - B：txs0108e review §2.4（p.28 `(0.15) TYP`）；pca9306 review §2 与 round-4 pca9306
     `lead_thickness` 行（p.31 `(0.13) TYP`）；sn74lvc2t45 review §2.4（p.31）。
 - 建议：
-  - 若选 A：删三个 gold 的 `lead_thickness`（走 `[GOLD]` 协议，各 review.md 补证据），DIM-004
-    测试写成"括号值只能来自 `land_*`"。
-  - 若选 B：改写 reference.md 的示例句（放开含义明确的尺寸标注、维持 `land_*` 一律可用），并一并
-    裁定 tca9548a/uln2003a 是否补记；DIM-004 测试改成"非 `land_*` 的括号值必须 `inferred`"。
-  - 未裁定前 DIM-004 刻意没有规则测试：写任何断言都等于替本议题拍板，故 audit 板面持续显示
-    `未覆盖: DIM-004`。
-- 状态：open
+  - **已裁定为读法 A（散文立场）**，2026-10-13 执行：删掉三个 gold 的 `lead_thickness`
+    （提交 `86234b9`，各 review.md 已补证据：页码 + 引文 + 删除理由，并点明 pca9306 推翻的是
+    round-4 adjudication 的“保留”行）；DIM-004 现由检查器 `check_reference_dimensions`
+    （非 `land_*` 维度记录了引文中括号印刷的值即 FAIL）机械执行，测试
+    `tests/test_rules.py::test_DIM_004_*` 含植入错误、行内参考值不误报、`land_*` 豁免、
+    字母脚注 `D(1)` 不误判、三个 gold 字段删除 pin、23 gold 语料。
+  - 重跑证据：`evals/runs/dim004_goldfix_rescore.md`。只有三个受影响 case 的 dims 记分
+    变化（gold 12→11；pca9306_run2 usable 翻 NO，因为它记的正是被禁值），其余 run 逐字节不变。
+- 状态：settled（读法 A；金标已删，规则已有机械执行者，板面 `未覆盖: []`）
 
 ## MPN-001 六个 gold 记的不是印刷 orderable，MUST 无执行者
 - 现象：reference.md:19-21 要求 mpn 是 addendum 列的 orderable，"不是任何页面上都不出现的 package-only 形式"，

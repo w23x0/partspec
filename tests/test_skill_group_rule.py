@@ -18,16 +18,10 @@ def _group_rule(text):
     """The `group` bullet of ## Pin fields, the supply-pins bullet and the shared-node carve-out, flattened."""
     bullet = re.search(r"^- `group`:.*?(?=^- `|\Z)", text, re.MULTILINE | re.DOTALL)
     assert bullet, "no `group` bullet in ## Pin fields"
-    supply = re.search(
-        r"^- The supply pins are the one exception.*?(?=^- \`|\Z)", text, re.MULTILINE | re.DOTALL
-    )
+    supply = re.search(r"^- The supply pins are the one exception.*?(?=^- \`|\Z)", text, re.MULTILINE | re.DOTALL)
     carve_out = re.search(r"^- A node shared by every unit.*?(?=^- \`|\Z)", text, re.MULTILINE | re.DOTALL)
     return _flat(
-        bullet.group(0)
-        + "\n"
-        + (supply.group(0) if supply else "")
-        + "\n"
-        + (carve_out.group(0) if carve_out else "")
+        bullet.group(0) + "\n" + (supply.group(0) if supply else "") + "\n" + (carve_out.group(0) if carve_out else "")
     )
 
 

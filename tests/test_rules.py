@@ -13,7 +13,7 @@ a rule-id:
 Wording guards for the same prose live in ``tests/test_skill_*.py`` on purpose:
 they pin the instruction text, not a behaviour, and are not audit-visible.
 
-A rule with no test here shows up in the audit board as uncovered (DIM-004 today). That is deliberate: writing a fake test for it would hide the gap the board exists to show.
+A rule with no test here shows up in the audit board as uncovered. That is deliberate: writing a fake test for it would hide the gap the board exists to show. (DIM-004 was the last such rule; the 2026-10-13 round gave it a checker and closed the gap.)
 """
 
 import json
@@ -26,7 +26,7 @@ from kicad_partspec.findings import WARN, failed
 from kicad_partspec.spec import load_spec
 from kicad_partspec.verify import verify_spec
 from kicad_partspec.verify.quotes import check_quotes
-from kicad_partspec.verify.spec_checks import check_quote_value_support
+from kicad_partspec.verify.spec_checks import check_quote_value_support, check_reference_dimensions
 from test_skill_dimension_rules import NAMES
 from test_spec_checks import BASE, failing_ids, mutated, src
 
@@ -185,13 +185,13 @@ def test_SRC_005_dimension_sources_are_checked_too():
 # --- SRC-006: the quote must carry the number it is cited for -------------------------------------------
 
 
-def _dim(value):
-    return mutated(lambda d: d["package"]["dimensions"].update(width=value))
+def _dim(name, value):
+    return mutated(lambda d: d["package"]["dimensions"].update({name: value}))
 
 
 def test_SRC_006_a_quote_to_another_callout_is_reported():
     dim = {"nom": 1.55, "source": src(1, "SEATING PLANE 0.15 0.05 TYP")}
-    assert "dim.quote_unsupported" in failing_ids(_dim(dim))
+    assert "dim.quote_unsupported" in failing_ids(_dim("width", dim))
 
 
 @pytest.mark.parametrize(
@@ -204,21 +204,21 @@ def test_SRC_006_a_quote_to_another_callout_is_reported():
 )
 def test_SRC_006_a_supporting_number_passes(quote, values):
     dim = dict(values, source=src(2, quote))
-    assert not failing_ids(_dim(dim))
+    assert not failing_ids(_dim("width", dim))
 
 
 def test_SRC_006_a_numberless_quote_is_a_dimension_letter_row():
     """74hc595's lead_length quotes the letter header `HE L Lp v w y`; the values sit in the row below it."""
     dim = {"min": 0.4, "max": 1.27, "source": src(4, "HE L Lp v w y")}
-    assert not failing_ids(_dim(dim))
+    assert not failing_ids(_dim("lead_length", dim))
 
 
 def test_SRC_006_only_an_extracted_dimension_is_checked():
     """rp2040's land_span is derived from the quoted pitch rows; `inferred` says so and the checker stands down."""
     dim = {"nom": 5.75, "source": src(6, "7.10 4.40"), "status": "inferred"}
-    assert not failing_ids(_dim(dim))
+    assert not failing_ids(_dim("land_span", dim))
     dim["status"] = "extracted"
-    assert "dim.quote_unsupported" in failing_ids(_dim(dim))
+    assert "dim.quote_unsupported" in failing_ids(_dim("land_span", dim))
 
 
 @pytest.mark.parametrize("path", GOLD, ids=[p.parent.name for p in GOLD])
@@ -398,7 +398,45 @@ def test_STAT_002_confirmed_is_reserved_for_humans(path):
     assert all(value.get("status") != "confirmed" for value in data["package"]["dimensions"].values())
 
 
-# --- DIM-002/003/005 and LAND-001: dimension naming ----------------------------------------------------
+# --- DIM-002/003/004/005 and LAND-001: dimension naming --------------------------------------------------
+
+
+def test_DIM_004_a_recorded_parenthesised_value_is_reported():
+    """The shape the round-1 audit found the three golds in: the value is the parenthesised one."""
+    dim = {"nom": 0.13, "source": src(31, "(0.13) TYP")}
+    assert "dim.reference_value" in failing_ids(_dim("lead_thickness", dim))
+
+
+def test_DIM_004_a_reference_value_beside_a_real_one_is_not_a_failure():
+    """pca9306's lead_length row carries `(0.13) TYP`; the recorded foot length is not that value."""
+    dim = {"min": 0.2, "max": 0.35, "source": src(31, "0.35 0.0 (0.13) TYP 0.20")}
+    assert not failing_ids(_dim("lead_length", dim))
+
+
+def test_DIM_004_a_land_dimension_may_use_a_parenthesised_value():
+    dim = {"nom": 0.85, "source": src(32, "8X (0.85) SYMM")}
+    assert not failing_ids(_dim("land_pad_length", dim))
+
+
+def test_DIM_004_a_letter_footnote_is_not_a_parenthesised_value():
+    """74hc595's letter header prints `D(1) E(1)`: the note reference is not a reference value."""
+    dim = {"nom": 0.5, "source": src(3, "Unit A A1 A2 A3 bp c D(1) E(1) e 0.5")}
+    assert not failing_ids(_dim("pitch", dim))
+
+
+@pytest.mark.parametrize("case", ["txs0108e_tssop20", "sn74lvc2t45_vssop8", "pca9306_vssop8"])
+def test_DIM_004_the_reference_only_thickness_is_not_recorded(case):
+    """The 2026-10-13 [GOLD] fix: `(0.15) TYP` / `(0.13) TYP` was the only thickness callout, so
+    `lead_thickness` is out (see each case's review.md for the page and the quote of record)."""
+    assert "lead_thickness" not in gold(case)["package"]["dimensions"]
+
+
+@pytest.mark.parametrize("path", GOLD, ids=[p.parent.name for p in GOLD])
+def test_DIM_004_no_gold_records_a_parenthesised_value(path):
+    data = json.loads(path.read_text(encoding="utf-8"))
+    spec, problems = load_spec(data)
+    assert spec is not None and not problems
+    assert not check_reference_dimensions(spec)
 
 
 @pytest.mark.parametrize("path", GOLD, ids=[p.parent.name for p in GOLD])

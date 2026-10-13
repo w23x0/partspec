@@ -211,6 +211,45 @@ def check_quote_value_support(spec: PartSpec) -> list[Finding]:
     return findings
 
 
+_PAREN_NUMBER = re.compile(r"(?<![A-Za-z0-9])\(\s*(?P<value>\d+(?:\.\d+)?)\s*\)")
+
+
+def check_reference_dimensions(spec: PartSpec) -> list[Finding]:
+    """A parenthesised value never becomes a package dimension (DIM-004).
+
+    A quote may incidentally show a reference value next to a real one — pca9306's lead_length row
+    carries `(0.13) TYP` — so the test is on what was recorded: a non-`land_*` dimension whose
+    recorded value its own quote prints in parentheses. A boxed `BASIC` value is the same rule with
+    no textual marker; the prose covers it.
+    """
+    findings: list[Finding] = []
+    for name, dim in spec.package.dimensions.items():
+        if name.startswith("land_"):
+            continue
+        if dim.source is None or not dim.source.quote.strip():
+            continue  # check_provenance owns a missing or empty quote
+        parenthesised = [float(m.group("value")) for m in _PAREN_NUMBER.finditer(dim.source.quote)]
+        if not parenthesised:
+            continue
+        recorded = {
+            label: value for label, value in (("min", dim.min), ("nom", dim.nom), ("max", dim.max)) if value is not None
+        }
+        for label, value in recorded.items():
+            if _carries(value, parenthesised):
+                findings.append(
+                    Finding(
+                        "dim.reference_value",
+                        FAIL,
+                        f"package.dimensions.{name}.{label} {value} is printed parenthesised in quote "
+                        f"{dim.source.quote!r}: a parenthesised value is a reference dimension, usable only for "
+                        "a land_* value — drop the dimension when it is the only callout for it on the sheet.",
+                        path=f"package.dimensions.{name}",
+                        actual={"recorded": recorded, "parenthesised": parenthesised},
+                    )
+                )
+    return findings
+
+
 SPEC_CHECKS: tuple[Callable[[PartSpec], list[Finding]], ...] = (
     check_provenance,
     check_pin_count,
@@ -218,5 +257,6 @@ SPEC_CHECKS: tuple[Callable[[PartSpec], list[Finding]], ...] = (
     check_electrical_types,
     check_dimension_order,
     check_quote_value_support,
+    check_reference_dimensions,
     check_statuses,
 )

@@ -18,10 +18,31 @@ audit = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(audit)
 
 RULES = [
-    {"id": "SCH-001", "level": "MUST", "statement": "every value cites a page and a quote", "spec": "skills/partspec/reference.md"},
-    {"id": "SCH-005", "level": "MUST", "statement": "dimension values are ordered and positive", "spec": "skills/partspec/reference.md"},
-    {"id": "DIM-001", "level": "SHOULD", "statement": "a dimension gets the min/nom/max the sheet prints", "spec": "skills/partspec/reference.md"},
-    {"id": "GEN-001", "level": "MUST", "statement": "golds build and load", "spec": "src/kicad_partspec/api.py · build", "suite": "gold-build"},
+    {
+        "id": "SCH-001",
+        "level": "MUST",
+        "statement": "every value cites a page and a quote",
+        "spec": "skills/partspec/reference.md",
+    },
+    {
+        "id": "SCH-005",
+        "level": "MUST",
+        "statement": "dimension values are ordered and positive",
+        "spec": "skills/partspec/reference.md",
+    },
+    {
+        "id": "DIM-001",
+        "level": "SHOULD",
+        "statement": "a dimension gets the min/nom/max the sheet prints",
+        "spec": "skills/partspec/reference.md",
+    },
+    {
+        "id": "GEN-001",
+        "level": "MUST",
+        "statement": "golds build and load",
+        "spec": "src/kicad_partspec/api.py · build",
+        "suite": "gold-build",
+    },
 ]
 SUITES = {"gold-spec": (True, "23/23", 23), "gold-quotes": (True, "skipped", None), "gold-build": (True, "23/23", None)}
 
