@@ -129,7 +129,7 @@
     {
       "id": "DIM-001",
       "level": "SHOULD",
-      "statement": "A dimension gets min and max for a printed range, nom for TYP/BSC/one land-pattern number, max only for a MAX value, and all three for X +/- t.",
+      "statement": "A dimension gets min and max for a printed range, nom for TYP/BSC/one land-pattern number, max only for a MAX value, and all three for X +/- t; two numbers stacked on the drawing (1.0 over 0.8) also give min and max.",
       "spec": "skills/partspec/reference.md · dimension values bullet"
     },
     {

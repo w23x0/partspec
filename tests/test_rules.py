@@ -54,9 +54,12 @@ def dim(case, name):
     return gold(case)["package"]["dimensions"][name]
 
 
-# A range as the drawing prints it: `4.81-5.00`, `0.31 - 0.51`, `.005-.010`. Note numbers glued to a
-# letter (`D(1)`) and degrees (`0 -8`) are excluded by the decimal endpoints.
-RANGE_QUOTE = re.compile(r"(?<![0-9.])(?:\d+\.\d+|\.\d+)\s*[-\u2013]\s*(?:\d+\.\d+|\.\d+)(?![0-9.])")
+# A range as the drawing prints it: `4.81-5.00`, `0.31 - 0.51`, `.005-.010`, or a mixed pair (`0.9 - 1`).
+# At least one endpoint must carry a decimal: numbers glued to a letter (`D(1)`) are excluded, and an
+# integer-integer pair is out because the text layer's `0 -8` is a degree angle, not a dimension.
+RANGE_QUOTE = re.compile(
+    r"(?<![0-9.])(?:(?:\d+\.\d+|\.\d+)\s*[-\u2013]\s*(?:\d+(?:\.\d+)?|\.\d+)|\d+\s*[-\u2013]\s*(?:\d+\.\d+|\.\d+))(?![0-9.])"
+)
 BRACKET_QUOTE = re.compile(r"\[\s*(?:\d+\.\d+|\.\d+)\s*[-\u2013]\s*(?:\d+\.\d+|\.\d+)\s*\]")
 
 

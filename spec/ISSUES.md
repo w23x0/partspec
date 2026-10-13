@@ -148,7 +148,16 @@
 - 两种读法：A 声明补上叠印形态（与正文对齐）；B 认为叠印属于"range"的一种表现，声明措辞合并。
 - 证据：reference.md:25、spec/rules.json DIM-001 声明、tests/test_rules.py:57 与 372-375（及其实测）。
 - 建议：与 DIM-004 同属 DIM 模块的措辞对齐，人类确认后同步措辞守卫 tests/test_skill_dimension_rules.py。
-- 状态：open（来源：round 1 独立审计，RANGE_QUOTE 边界由主会话实测确认）
+- 状态：settled（2026-10-13 主会话执行，用户已授权自行推动）：两处都对齐了，但只对齐了能机械
+  覆盖的部分——
+  1. `spec/rules.json` DIM-001 声明补上"两个叠印数字（1.0 压 0.8）⇒ min 与 max"，与
+     reference.md:25 正文一致（登记表是索引，散文才是权威正文，此处只是补齐索引漏项）。
+  2. `tests/test_rules.py` 的 RANGE_QUOTE 从"两端都必须带小数点"放宽到"至少一端带小数点"，
+     因此混合端点区间（`0.9 - 1`、`1 - 0.75`）现在会被语料测试要求落 min+max。
+  没有做的：纯整数端点区间（`2-3`）。实测 gold 引文里的整数-整数短横只有 `0 -8` / `0 -6`
+     （ads1015/ads1115/drv8871/ina226/ne555/sn74/tca9548a/tlc555/tps5430 共 11 处），那是
+     pdftotext 丢掉度号的脚角度 `0°-8°`，不是尺寸区间；放开整数端点语料测试立刻在这些 gold 上
+     误报。堆叠形态（`1.0 0.8`，行内无分隔符）从引文不可机械辨认，维持散文描述。
 
 ## 候选新规则：没有任何一层校验"引文支撑所记数值"（SRC-001/SCH-001 的边界）
 - 现象：check_provenance（src/kicad_partspec/verify/spec_checks.py:26-41）只查 source 存在、page>=1、quote 非空；
