@@ -2,38 +2,32 @@
 
 状态截至 2026-10-13，分支 `next`。本文件是“继续开始”的入口：新会话先读它，再运行 `./scripts/audit.sh`。
 
-## 刚完成的事（2026-10-13，分支 `next`）
+## 刚完成的事（2026-10-13，分支 `next`，10 个提交 fa3e0a5…0ed7907）
 
-- **DIM-004 裁定并落地（读法 A）**：round 1 审计立案的"三个 gold 把括号参考值记成
-  `lead_thickness`"冲突已按 reference.md 散文裁定——括号值是 drawing NOTE 声明的参考值，
-  不得成为 package dimension；全表只剩这一个厚度标注时整体不记。金标提交 `86234b9`
-  （[GOLD]）删除 txs0108e/sn74lvc2t45/pca9306 的 `lead_thickness`（各 review.md 补了
-  页码+引文+删除理由，pca9306 明确推翻 round-4 adjudication 的"保留"行）；金标重跑证据
-  `evals/runs/dim004_goldfix_rescore.md`（只有三个 case 记分变化，方向由规则强制，
-  其余 run 逐字节不变）。规则侧新增检查器 `check_reference_dimensions`
-  （`src/kicad_partspec/verify/spec_checks.py`）：非 `land_*` 维度若记录了引文中括号印刷的
-  值即 FAIL；行内参考值（lead_length 行里的 `(0.13) TYP`）、`land_*` 豁免、字母脚注 `D(1)`
-  均不误报。rules.json DIM-004 的执行者指向该检查器。
-- **SRC-006 立项并落地**：round 1 独立审计的候选规则"引文必须支撑所记数值"已成 MUST 规则。
-  `check_quote_value_support`（`src/kicad_partspec/verify/spec_checks.py`）对每个 `extracted`
-  维度要求：引文带数字时，min/nom/max 至少有一个出现在引文中（英寸引文 ×25.4 换算，容差 2%）；
-  无数字引文 = 字母行（`HE L Lp v w y`）不查；`inferred` 维度不查。登记 `spec/rules.json`
-  SRC-006，正文见 `reference.md` 括号值段之后，测试 `tests/test_rules.py::test_SRC_006_*`。
-  257 条 gold 维度零失败。连带修正：`test_SCH_005_a_zero_minimum_is_allowed` 的夹具引文
-  （`e 0.95` 不支撑被改写后的 0.0/0.5/1.0，改为 `e 0.0-1.0`，断言未动）。
-  残留口子记在 ISSUES.md 该条 settled 注记（纯字母引文仍可谎报，需 PDF 才能收掉）。
+用户明确不再代为裁定，授权主会话自行推动后，round 1 独立审计的 9 条议题全部办完，
+仅 MPN-001 因缺数据表 PDF 保持 open（见下）。按提交顺序：
 
-此前（2026-10-12，提交 `abc572c` 与 `7bd1def`）落地了宪法/规则登记/审计板面/循环驱动（原文保留）：
+1. **SRC-006**（新 MUST）：`check_quote_value_support`——引文带数字时 `extracted` 维度
+   至少有一个 min/nom/max 被引文数字支撑（英寸 ×25.4，容差 2%）；无数字引文=字母行、
+   `inferred`=人工标记，均不查。257 条 gold 维度零失败。
+2. **DIM-004**（[GOLD] 86234b9 + 规则 55541f1，读法 A）：三个 gold 删除 parentheses-only
+   `lead_thickness`，各 review.md 补证据，重跑记录 `evals/runs/dim004_goldfix_rescore.md`；
+   `check_reference_dimensions` 让规则首次有机械执行者。
+3. **SCH-007**（efc48fd，读法 A）：loader 不再把整数引脚号转字符串，直接 schema 失败；
+   已确认 gold 与 runs 无整数引号，历史记分不动。
+4. **LAND-001**（fdb478d，读法 A）：正文补"三件套"规则 + 新 `check_land_set` 检查器。
+5. **PIN-005**（4fe5f49）：电源名语料测试从 11 个硬写名改为轨道名谓词（词干+前缀+
+   A/B 后缀+配对），VBUS/EP/PAD/DAP 刻意不收并注明理由。
+6. **DIM-001**（e594970）：登记表补堆叠形态；RANGE_QUOTE 接受混合端点（`0.9 - 1`），
+   纯整数端点仍排除（gold 里 `0 -8` 是脚角度，实测 11 处）。
+7. **PIN-004**（7889271，读法 A）：孤立电源 group "可选"回归规则本意，测试改为两种读法
+   都过；README round-2 段同步纠错。
+8. **DIM-003**（467b670，读法 a）：GAGE PLANE 禁区=带标注的值本身，正文补口径与正例；
+   读法 (b) 与 spans 表矛盾的理由写进 ISSUES.md。
+9. **PIN-001**（0ed7907，读法 B）：exposed pad 用引脚表印刷词（PAD/DAP/EP），gold 不动、
+   记分不动。
 
-- `AGENTS.md`：宪法（工作循环、红线、Gold 修改仲裁协议、审计分层、架构约定）。
-- `spec/rules.json`：规则登记表（`MPN/PIN/STAT/SCH/SRC/DIM/LAND/GEN`，MUST/SHOULD），索引
-  `skills/partspec/reference.md`。
-- `tests/test_rules.py`：用例名即 rule-id；SCH/SRC 是穿过真实检查器的夹具测试，其余是对 23 个 gold
-  的语料测试。措辞守卫仍在 `tests/test_skill_*.py`，不计入审计。
-- `scripts/audit.sh`（实现 `scripts/audit.py`）：唯一进度指标。板面 = 规则计数 +
-  `gold-spec` / `gold-quotes` / `gold-build` 三套件；上一板存 `.audit/last.json`（已 gitignore）。
-- `scripts/loop.sh` + `scripts/prompts/`：无人值守循环，每轮独立分支，绿板即停，无进展熔断。
-- `spec/ISSUES.md`：Spec 争议登记处。
+在此之前，同一轮还完成了宪法/登记/审计板面/循环驱动的落地（abc572c、7bd1def）。
 
 ## 当前板面（已验证）
 
@@ -54,14 +48,13 @@ gold-spec: 23/23   gold-quotes: skipped   gold-build: 23/23 (20 mods, 3 skipped)
    `./scripts/audit.sh --datasheets DIR`（或设 `PARTSPEC_DATASHEETS`），`gold-quotes` 应从
    `skipped` 变为实数。预期全绿；若某 case 引文失败，按仲裁协议处理，不得改测试绕开。
    PDF 就位后还可收掉 SRC-006 的纯字母引文口子（74hc595 `lead_length`，见 ISSUES.md）。
-2. **open 议题的主会话推进**（用户 2026-10-13 明确不再代为裁定，授权自行推动；含金标改动的
-   仍走 [GOLD] 协议）：
-   - MPN-001：6 个 gold 的 mpn 不是印刷 orderable，需 PDF 核 addendum 后才能按 A 或 B 定；
-   - LAND-001 / PIN-004 / PIN-005 / DIM-001 / DIM-003：措辞与测试口径对齐（改既有断言需谨慎，
-     每条先落 ISSUES.md 证据再动）；
-   - PIN-001：EP 命名与 gold 的 PAD/DAP 分歧，需重印引脚表证据。
-3. **无人值守循环**：板面无 `未覆盖` 后，循环的绿板条件更接近可达；
-   `AGENT_CMD="claude -p" MAX_ROUNDS=20 STALL_LIMIT=3 ./scripts/loop.sh`。
+2. **MPN-001（唯一 open 议题，硬阻塞于 PDF）**：6 个 gold 的 mpn 不是印刷 orderable
+   （`ADS1115IDGS`/`INA219AxD`/`TLC555xD`/`TPS54202`/`TXS0108EPW` 一类）。两种读法都需逐案
+   核对数据表 addendum：A 按 MUST 改 6 个 gold 的 mpn（走 [GOLD] 协议 + 重跑受影响 round 记分），
+   B 确认数据表确实没印该 orderable 后启用逃生条款并补 review 证据。PDF 到位前无法裁定。
+3. **无人值守循环**：板面 28/28 全绿、无未覆盖，`AGENT_CMD="claude -p" MAX_ROUNDS=20
+   STALL_LIMIT=3 ./scripts/loop.sh` 现在从绿板出发；后续轮次的自然候选（都需新证据或新设计，
+   不是 ISSUES 遗留）：新规则候选题（如"双单位引文须给换算"）、每轮一次的独立审计再跑。
 
 ## 无人值守启动方式
 

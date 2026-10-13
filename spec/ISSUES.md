@@ -161,7 +161,13 @@
 - 两种读法：A 这是真 MUST，正文补写并在 verify 层加检查；B 登记表删掉尾句，只保留语料测试这一层执行。
 - 证据：spec/rules.json:157-159、reference.md:127-130、src/kicad_partspec/gen/footprint.py:46/87-92。
 - 建议：人类裁定登记表与正文的对齐方向。
-- 状态：open（来源：round 1 独立审计，证据行号已复核）
+- 状态：settled（读法 A，2026-10-13 主会话执行，用户已授权自行推动）：尾句是真 MUST，三处同步——
+  1. `reference.md` 陆地段补写"三个焊盘尺寸是一套，同时记或全不记；只有一二个是缺陷，
+     不是进度；`land_ep_size` 独立"；
+  2. `src/kicad_partspec/verify/spec_checks.py` 新增 `check_land_set`（半套即 `land.incomplete`
+     FAIL），`verify_spec` 全链路执行，审计 `gold-spec` 因此自动覆盖；
+  3. rules.json LAND-001 的 spec 指向该检查器。按协议重跑 audit：23/23 全过，`gold-build`
+     不变（原缺口路径本来就 skip 而非失败）。
 
 ## DIM-001 登记表声明漏掉"两个叠印数字"形态
 - 现象：reference.md:25 的 bullet 列了五种形态，其中"或两个叠印在图上（1.0 压 0.8）→ min 与 max"；
