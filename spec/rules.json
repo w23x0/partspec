@@ -160,7 +160,7 @@
       "id": "LAND-001",
       "level": "MUST",
       "statement": "land_* dimensions are the metal (the pad outline, the plain pad callouts, or the rectangle the note calls METAL COVERED BY SOLDER MASK), never the SOLDER MASK OPENING; land_pad_length, land_pad_width and land_span are recorded together or not at all.",
-      "spec": "skills/partspec/reference.md · land dimensions paragraph"
+      "spec": "src/kicad_partspec/verify/spec_checks.py · check_land_set（金属取舍部分见 reference.md）"
     },
     {
       "id": "GEN-001",

@@ -127,7 +127,9 @@ the bend starts, `lead_thickness` from the arrows straddling the lead material i
 `land_pad_length`, `land_pad_width`, `land_span` and `land_ep_size` are metal, so take them from the rectangle that is the
 metal: the pad outline, the plain pad callouts, or the rectangle a note calls "METAL COVERED BY SOLDER MASK". A second
 rectangle labelled "SOLDER MASK OPENING" is the mask, not the pad (DRV8871 records `(2.95)`, not the `(2.71)`), and it is
-not recorded. When the drawing prints only the mask opening, say so in the hand-over instead of substituting it.
+not recorded. When the drawing prints only the mask opening, say so in the hand-over instead of substituting it. The three
+pad dimensions are one set: record `land_pad_length`, `land_pad_width` and `land_span` together or not at all — the footprint
+is generated from all three, and a set with one or two of them is a defect, not progress. `land_ep_size` stands alone.
 
 Values in parentheses on a drawing are reference dimensions — the drawing's own notes say so. They may be used for a `land_*`
 value and must not become a package dimension: a parenthesised `(0.15) TYP` across a lead in a package outline is not a

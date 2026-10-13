@@ -250,6 +250,32 @@ def check_reference_dimensions(spec: PartSpec) -> list[Finding]:
     return findings
 
 
+LAND_SET = ("land_pad_length", "land_pad_width", "land_span")
+
+
+def check_land_set(spec: PartSpec) -> list[Finding]:
+    """The land pattern is a set: all three of pad length, pad width and span, or none (LAND-001).
+
+    One or two of them cannot make a footprint, and the generator refuses to guess; leaving the
+    set half-recorded is a defect, not a progress marker. `land_ep_size` stands alone.
+    """
+    present = [name for name in LAND_SET if name in spec.package.dimensions]
+    if len(present) != 3 and present:
+        missing = sorted(set(LAND_SET) - set(present))
+        return [
+            Finding(
+                "land.incomplete",
+                FAIL,
+                f"the land pattern records {', '.join(present)} but not {', '.join(missing)}: "
+                "land_pad_length, land_pad_width and land_span are recorded together or not at all "
+                "(the footprint is generated from all three) — complete the set or drop it.",
+                path="package.dimensions",
+                actual={"present": present, "missing": missing},
+            )
+        ]
+    return []
+
+
 SPEC_CHECKS: tuple[Callable[[PartSpec], list[Finding]], ...] = (
     check_provenance,
     check_pin_count,
@@ -258,5 +284,6 @@ SPEC_CHECKS: tuple[Callable[[PartSpec], list[Finding]], ...] = (
     check_dimension_order,
     check_quote_value_support,
     check_reference_dimensions,
+    check_land_set,
     check_statuses,
 )

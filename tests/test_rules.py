@@ -222,9 +222,9 @@ def test_SRC_006_a_numberless_quote_is_a_dimension_letter_row():
 def test_SRC_006_only_an_extracted_dimension_is_checked():
     """rp2040's land_span is derived from the quoted pitch rows; `inferred` says so and the checker stands down."""
     dim = {"nom": 5.75, "source": src(6, "7.10 4.40"), "status": "inferred"}
-    assert not failing_ids(_dim("land_span", dim))
+    assert not failing_ids(_dim("pitch", dim))
     dim["status"] = "extracted"
-    assert "dim.quote_unsupported" in failing_ids(_dim("land_span", dim))
+    assert "dim.quote_unsupported" in failing_ids(_dim("pitch", dim))
 
 
 @pytest.mark.parametrize("path", GOLD, ids=[p.parent.name for p in GOLD])
@@ -420,8 +420,12 @@ def test_DIM_004_a_reference_value_beside_a_real_one_is_not_a_failure():
 
 
 def test_DIM_004_a_land_dimension_may_use_a_parenthesised_value():
-    dim = {"nom": 0.85, "source": src(32, "8X (0.85) SYMM")}
-    assert not failing_ids(_dim("land_pad_length", dim))
+    """The land set is the exemption's home: pca9306's pads are quoted `8X (0.85) SYMM` and the like."""
+    dims = {
+        name: {"nom": value, "source": src(32, f"8X ({value})")}
+        for name, value in (("land_pad_length", 0.85), ("land_pad_width", 0.3), ("land_span", 3.1))
+    }
+    assert not failing_ids(mutated(lambda d: d["package"]["dimensions"].update(dims)))
 
 
 def test_DIM_004_a_letter_footnote_is_not_a_parenthesised_value():
@@ -513,3 +517,18 @@ def test_LAND_001_the_land_set_is_recorded_whole_or_not_at_all(path):
 def test_LAND_001_land_dimensions_are_the_metal_not_the_mask_opening():
     """DRV8871's land pattern prints a mask rectangle smaller than the metal; the gold records the metal (2.95)."""
     assert dim("drv8871_soic8", "land_ep_size")["nom"] == 2.95
+
+
+def test_LAND_001_a_half_recorded_land_set_is_reported():
+    """SOT-223 with only land_pad_length: the footprint cannot be drawn, so the spec-level check fails."""
+    dim = {"nom": 1.5, "source": src(2, "8X (1.5)")}
+    assert "land.incomplete" in failing_ids(_dim("land_pad_length", dim))
+
+
+def test_LAND_001_a_complete_land_set_or_none_passes():
+    complete = [
+        (name, {"nom": n, "source": src(2, f"({n})")})
+        for name, n in (("land_pad_length", 1.5), ("land_pad_width", 0.45), ("land_span", 5.8))
+    ]
+    assert not failing_ids(mutated(lambda d: d["package"]["dimensions"].update(complete)))
+    assert not failing_ids(mutated(lambda d: d["package"]["dimensions"].pop("pitch")))
