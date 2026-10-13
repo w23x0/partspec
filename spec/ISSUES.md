@@ -181,4 +181,10 @@
   或明确该测试只覆盖所见语料。
 - 证据：tests/test_rules.py:301-305、reference.md:70、spec/rules.json:56-61。
 - 建议：属"测试覆盖边界"而非规则矛盾，可与下轮工作循环一并处理；若选 B 涉及改既有断言，需人类确认。
-- 状态：open（来源：round 1 独立审计，证据行号已复核）
+- 状态：settled（取 A 的语义化版本，2026-10-13 主会话执行）：测试白名单从 11 个硬写名改为
+  轨道名谓词——词干 `VCC/VDD/VSS/GND/VIN/VREF/VS/VM/VBAT` + 印出的前缀
+  （A/D/IO/P/ADC/USB/VREG/PV/DV/AV）、`A/B` 后缀与 `VDD/VDDA` 配对形态；断言强度不变
+  （语料上"电源名 ⇒ power/_in/out"），覆盖从 11 名扩到 23 gold 的全部 26 种电源名变体。
+  刻意不收：VBUS（ina226 上是检测输入、cp2102n 上是稳压供电源，语义随零件而变，谓词化会
+  误判）与 EP/PAD/DAP/E（PIN-001 议题，另有测试覆盖）。测试与注释写在
+  `tests/test_rules.py` PIN-005 段。642 passed 无 gold 失败。

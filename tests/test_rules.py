@@ -354,11 +354,34 @@ def test_PIN_004_a_power_group_holds_supplies_and_nothing_else(path):
 # --- PIN-005: the electrical_type mapping --------------------------------------------------------------
 
 
+# A supply rail by name: the canonical stems plus the prefix, suffix and pairing forms sheets print
+# (AVCC, DVDD, IOVDD, USB_VDD, VCCA, AGND, VS, VREF1, VDD/VDDA). Deliberately NOT here: context-
+# dependent names -- ina226's VBUS is a sense input on that part while cp2102n's VBUS feeds a
+# regulator, and EP/PAD/DAP/E (exposed pads) are PIN-001 territory, tested separately.
+_SUPPLY_STEMS = {"VCC", "VDD", "VSS", "GND", "VIN", "VREF", "VS", "VM", "VBAT"}
+_SUPPLY_EXACT = {"V+", "V-", "PGND", "VIO", "USB", "VREGIN"}
+_SUPPLY_PREFIXES = {"A", "D", "IO", "P", "ADC", "USB", "VREG", "PV", "DV", "AV"}
+
+
+def _supply_name(name: str) -> bool:
+    if name in _SUPPLY_EXACT:
+        return True
+    for token in re.split(r"[/_+ ]", name.upper()):
+        stem = token.rstrip("0123456789")
+        if stem in _SUPPLY_STEMS:
+            return True
+        if stem[:-1] in _SUPPLY_STEMS and stem[-1:] in ("A", "B"):
+            return True  # VCCA, VCCB
+        if any(stem.startswith(prefix) and stem[len(prefix) :] in _SUPPLY_STEMS for prefix in _SUPPLY_PREFIXES):
+            return True
+    return False
+
+
 @pytest.mark.parametrize("path", GOLD, ids=[p.parent.name for p in GOLD])
 def test_PIN_005_supplies_are_typed_as_power(path):
     data = json.loads(path.read_text(encoding="utf-8"))
     for item in data["pins"]:
-        if item["name"] in ("VCC", "VDD", "VSS", "GND", "V+", "V-", "VM", "PGND", "VIO", "VBAT", "USB"):
+        if _supply_name(item["name"]):
             assert item["electrical_type"] in SUPPLY_TYPES, f"{path.parent.name}: pin {item['number']} {item['name']}"
 
 
