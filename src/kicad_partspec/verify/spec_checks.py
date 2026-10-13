@@ -6,6 +6,7 @@ to change.
 
 from __future__ import annotations
 
+import re
 from collections import Counter
 from collections.abc import Callable
 
@@ -158,11 +159,64 @@ def check_statuses(spec: PartSpec) -> list[Finding]:
     return findings
 
 
+_QUOTE_NUMBER = re.compile(r"\d+(?:\.\d+)?|\.\d+")
+# A drawing that prints inches quotes sizes like `.012-.020` where the spec records 0.31-0.51:
+# the conversion absorbs the rounding each way, so two per cent of the recorded value.
+_UNIT_TOLERANCE = 0.02
+_INCH_MM = 25.4
+
+
+def _carries(value: float, numbers: list[float]) -> bool:
+    """True when a quote number is the recorded value, or that number read in inches."""
+    return any(
+        abs(n - value) <= _UNIT_TOLERANCE * value or abs(n * _INCH_MM - value) <= _UNIT_TOLERANCE * value
+        for n in numbers
+    )
+
+
+def check_quote_value_support(spec: PartSpec) -> list[Finding]:
+    """An extracted dimension must be readable from its own quote (SRC-006).
+
+    A quote may sit on the cited page and still be the wrong evidence: `SEATING PLANE`
+    with a `nom` of 1.55 supports nothing.  A numberless quote is a dimension-letter row
+    (`HE L Lp v w y`) whose values live in a separate row of the text layer, and an
+    `inferred` dimension is a human-flagged interpretation; both are left alone.
+    """
+    findings: list[Finding] = []
+    for name, dim in spec.package.dimensions.items():
+        path = f"package.dimensions.{name}"
+        if dim.status != "extracted":
+            continue
+        if dim.source is None or not dim.source.quote.strip():
+            continue  # check_provenance owns a missing or empty quote
+        numbers = [float(item) for item in _QUOTE_NUMBER.findall(dim.source.quote)]
+        if not numbers:
+            continue
+        values = [value for value in (dim.min, dim.nom, dim.max) if value is not None]
+        if any(_carries(value, numbers) for value in values):
+            continue
+        recorded = {
+            label: value for label, value in (("min", dim.min), ("nom", dim.nom), ("max", dim.max)) if value is not None
+        }
+        findings.append(
+            Finding(
+                "dim.quote_unsupported",
+                FAIL,
+                f"{path} records {recorded} but quote {dim.source.quote!r} carries no number matching any of them "
+                "(a callout quoted in inches counts, converted): quote the row or callout the value was read from.",
+                path=path,
+                actual={"recorded": recorded, "quote_numbers": numbers},
+            )
+        )
+    return findings
+
+
 SPEC_CHECKS: tuple[Callable[[PartSpec], list[Finding]], ...] = (
     check_provenance,
     check_pin_count,
     check_pin_numbers_unique,
     check_electrical_types,
     check_dimension_order,
+    check_quote_value_support,
     check_statuses,
 )

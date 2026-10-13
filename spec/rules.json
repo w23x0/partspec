@@ -121,6 +121,12 @@
       "spec": "src/kicad_partspec/verify/quotes.py · check_quotes"
     },
     {
+      "id": "SRC-006",
+      "level": "MUST",
+      "statement": "An extracted dimension quoted from a row that carries numbers has one of min/nom/max among those numbers, matched after inch-to-mm conversion; a numberless quote is a dimension-letter row and an inferred dimension is not checked.",
+      "spec": "src/kicad_partspec/verify/spec_checks.py · check_quote_value_support"
+    },
+    {
       "id": "DIM-001",
       "level": "SHOULD",
       "statement": "A dimension gets min and max for a printed range, nom for TYP/BSC/one land-pattern number, max only for a MAX value, and all three for X +/- t.",

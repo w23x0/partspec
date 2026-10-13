@@ -23,8 +23,10 @@ from pathlib import Path
 import pytest
 
 from kicad_partspec.findings import WARN, failed
+from kicad_partspec.spec import load_spec
 from kicad_partspec.verify import verify_spec
 from kicad_partspec.verify.quotes import check_quotes
+from kicad_partspec.verify.spec_checks import check_quote_value_support
 from test_skill_dimension_rules import NAMES
 from test_spec_checks import BASE, failing_ids, mutated, src
 
@@ -120,7 +122,9 @@ def test_SCH_005_dimension_values_are_ordered_and_positive(mutate):
 
 
 def test_SCH_005_a_zero_minimum_is_allowed():
-    data = mutated(lambda d: d["package"]["dimensions"]["pitch"].update(min=0.0, nom=0.5, max=1.0))
+    data = mutated(
+        lambda d: d["package"]["dimensions"]["pitch"].update(min=0.0, nom=0.5, max=1.0, source=src(2, "e 0.0-1.0"))
+    )
     assert not failed(verify_spec(data))
 
 
@@ -176,6 +180,53 @@ def test_SRC_005_dimension_sources_are_checked_too():
     data = {"pins": [], "package": {"dimensions": {"pitch": {"source": {"page": 1, "quote": "nope"}}}}}
     findings = check_quotes(data, PAGES)
     assert [item.path for item in findings] == ["package.dimensions.pitch.source.quote"]
+
+
+# --- SRC-006: the quote must carry the number it is cited for -------------------------------------------
+
+
+def _dim(value):
+    return mutated(lambda d: d["package"]["dimensions"].update(width=value))
+
+
+def test_SRC_006_a_quote_to_another_callout_is_reported():
+    dim = {"nom": 1.55, "source": src(1, "SEATING PLANE 0.15 0.05 TYP")}
+    assert "dim.quote_unsupported" in failing_ids(_dim(dim))
+
+
+@pytest.mark.parametrize(
+    "quote, values",
+    [
+        ("e 0.95", {"nom": 0.95}),
+        ("8X .012-.020", {"min": 0.31, "max": 0.51}),  # inches on the sheet, mm in the spec
+        ("1.68 0.07", {"min": 1.61, "nom": 1.68, "max": 1.75}),  # X ± t, one endpoint printed
+    ],
+)
+def test_SRC_006_a_supporting_number_passes(quote, values):
+    dim = dict(values, source=src(2, quote))
+    assert not failing_ids(_dim(dim))
+
+
+def test_SRC_006_a_numberless_quote_is_a_dimension_letter_row():
+    """74hc595's lead_length quotes the letter header `HE L Lp v w y`; the values sit in the row below it."""
+    dim = {"min": 0.4, "max": 1.27, "source": src(4, "HE L Lp v w y")}
+    assert not failing_ids(_dim(dim))
+
+
+def test_SRC_006_only_an_extracted_dimension_is_checked():
+    """rp2040's land_span is derived from the quoted pitch rows; `inferred` says so and the checker stands down."""
+    dim = {"nom": 5.75, "source": src(6, "7.10 4.40"), "status": "inferred"}
+    assert not failing_ids(_dim(dim))
+    dim["status"] = "extracted"
+    assert "dim.quote_unsupported" in failing_ids(_dim(dim))
+
+
+@pytest.mark.parametrize("path", GOLD, ids=[p.parent.name for p in GOLD])
+def test_SRC_006_every_gold_dimension_is_supported_by_its_quote(path):
+    data = json.loads(path.read_text(encoding="utf-8"))
+    spec, problems = load_spec(data)
+    assert spec is not None and not problems
+    assert not check_quote_value_support(spec)
 
 
 # --- MPN-001: the orderable as the datasheet prints it -------------------------------------------------

@@ -155,8 +155,16 @@
   B 只要求"引文中至少出现一个与记录值同单位的数字"或仅对单 token 引文（如 `TYP`）加约束。
 - 证据：src/kicad_partspec/verify/{spec_checks,quotes}.py 上列行号；tests/test_rules.py:164-166（SRC-003 只覆盖
   "改写后子串消失"一种篡改）；DIM-001 测试 374-375 的 continue。
-- 建议：作为候选新规则待人类评估；若立规则，必须先立"双单位引文"的例外口径再写测试。
-- 状态：open（来源：round 1 独立审计，边界由主会话在 DIM-001 测试工作中独立发现并确认）
+- 建议：
+  - **已立为 SRC-006（MUST）**：`extracted` 维度若引文带数字，min/nom/max 至少有一个以引文数字
+    （或英寸数字 ×25.4，容差 2%）出现；引文无数字视为字母行不查；`inferred` 维度不查。
+    实现 `check_quote_value_support`（src/kicad_partspec/verify/spec_checks.py），登记在
+    `spec/rules.json` SRC-006，正文在 reference.md 括号值段之后；测试
+    `tests/test_rules.py::test_SRC_006_*`。257 条 gold 维度零失败，gold-spec 23/23 不退步。
+  - 残留口子（记录备查，不自行拍板）：引文完全无数字时可谎报——74hc595 `lead_length`
+    的引文就是纯字母行 `HE L Lp v w y`（值在下一行）。要收掉它必须改该 gold 的引文，
+    而引文校验需要数据表 PDF（本机没有），走 [GOLD] 协议需人类执行。
+- 状态：settled（规则落在 SRC-006；纯字母引文口子待 PDF 就位后另行 [GOLD] 处理）
 
 ## PIN-005 语料测试的电源名白名单漏掉 AVDD/VBUS/VDDIO 一类
 - 现象：tests/test_rules.py:301-305 只认 11 个硬写名（VCC VDD VSS GND V+ V- VM PGND VIO VBAT USB）。

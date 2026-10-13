@@ -136,6 +136,12 @@ boxed `BASIC` value, such as a boxed gage-plane offset, is likewise not a packag
 land pattern. If you have to interpret what a number is (for example which side of the drawing it measures), mark that
 dimension `inferred`.
 
+An `extracted` dimension has to be readable from its own quote: one of `min`/`nom`/`max` appears among the numbers the
+quote carries, a callout quoted in inches counting once converted (`.012-.020` supports 0.31–0.51). A quote that sits on
+the cited page but names a different callout is the wrong evidence even when the quote itself is found there. A quote
+with no numbers in it is a dimension-letter row (`HE L Lp v w y`) — the values live in the row below it — and an
+`inferred` dimension is a marked interpretation; the checker does not test either one.
+
 Three lead callouts are near-identical on the page and are the easiest to misread. Name each one by the two features its
 extension lines run between, not by its size, its place on the sheet or the label the drawing gives it:
 
