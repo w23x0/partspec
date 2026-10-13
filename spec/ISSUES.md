@@ -135,7 +135,14 @@
 - 证据：reference.md:122-123 与 140-142、两条 gold 的 source.quote、evals/README.md:460。
 - 建议：正文改写为读法(a)（并把 `0.25 GAGE PLANE` 写成正例）或 (b)；DIM-003 的测试目前只断言 ne555/drv8871，
   无 quote 级检查，两种读法都能一路绿。
-- 状态：open（来源：round 1 独立审计，证据行号已复核）
+- 状态：settled（读法 (a)，2026-10-13 主会话执行，用户已授权自行推动）：reference.md 原句
+  "never record it" 的 it 指带标注的那个值本身，正文已补一句把口径钉死——带标注的值才是禁区
+  （框住的 `0.25 GAGE PLANE` 偏移不是 standoff），同一文本层行里的普通数字照常读数，并点了
+  TXS0108E 的 `GAGE PLANE 0.15 0.05` 行记 0.05–0.15 standoff 为正例。理由：读法 (b) 与同文
+  spans 表直接矛盾（standoff 的定义就是"body underside 到 seating (gage) plane"的跨度，按 (b)
+  standoff 永远不能记）。两个 gold 不动（txs0108e standoff、tps54202 lead_thickness 在读法 (a)
+  下合法，evals/quotes 校验不受影响）；机械检查不可行——"GAGE PLANE 后的第一个数字"在 txs0108e
+  正是被记录的 0.15，写成检查器会误杀合法 gold。ne555/drv8871 既有断言保留。
 
 ## LAND-001 "三者同时记或全不记"只存在于登记表，正文与 src 都没有
 - 现象：spec/rules.json:157-159 的 LAND-001 声明尾句"land_pad_length, land_pad_width and land_span are

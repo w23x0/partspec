@@ -120,7 +120,10 @@ callout's extension lines and see which way its arrow runs:
   such callout, leave `overall_length` out rather than naming a body dimension for it.
 
 A boxed basic dimension, or one labelled `GAGE PLANE`, is a reference plane or a datum, not a size: never record it as
-`standoff`, `lead_length`, `lead_thickness` or anything else. The three lead dimensions come from DETAIL A's arrows —
+`standoff`, `lead_length`, `lead_thickness` or anything else. The value that carries the label is the barred one — a boxed
+`0.25 GAGE PLANE` offset is not a standoff — while numbers sitting in the same row of the text layer are ordinary values
+and are read normally (the seating-plane row `GAGE PLANE 0.15 0.05` on the TXS0108E sheet carries that part's 0.05–0.15
+standoff). The three lead dimensions come from DETAIL A's arrows —
 `standoff` from the body underside down to the seating plane, `lead_length` along the flat foot from the lead tip to where
 the bend starts, `lead_thickness` from the arrows straddling the lead material itself, where a `TYP` supplies `nom`.
 
