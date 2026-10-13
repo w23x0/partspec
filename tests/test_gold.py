@@ -5,9 +5,17 @@ from pathlib import Path
 
 import pytest
 
-from kicad_partspec.findings import failed
+from kicad_partspec.findings import WARN, failed
 from kicad_partspec.verify import verify_spec
-from kicad_partspec.verify.quotes import check_quotes, find_datasheet, normalize, page_texts, suggest_quote
+from kicad_partspec.verify.quotes import (
+    check_quotes,
+    document_number,
+    first_page,
+    normalize,
+    page_texts,
+    resolve_datasheet,
+    suggest_quote,
+)
 
 CASES = Path(__file__).resolve().parent.parent / "evals" / "cases"
 GOLD = sorted(CASES.glob("*/spec.gold.json"))
@@ -33,8 +41,11 @@ def test_gold_passes_spec_layer(path):
 @pytest.mark.parametrize("path", GOLD, ids=[p.parent.name for p in GOLD])
 def test_gold_quotes_match_datasheet(path):
     data = _load(path)
-    pdf = find_datasheet(data["datasheet"]["sha256"], Path(DATASHEETS))
-    assert pdf is not None, "no PDF in PARTSPEC_DATASHEETS matches datasheet.sha256"
+    pdf, mode = resolve_datasheet(data["datasheet"], Path(DATASHEETS))
+    assert pdf is not None, "no PDF in PARTSPEC_DATASHEETS matches datasheet.sha256 or its revision"
+    if mode == "rebuilt":
+        # the fallback is a named substitution, never a silent one: same document number on page 1
+        assert document_number(data["datasheet"]["revision"]) in first_page(pdf)
     findings = check_quotes(data, page_texts(pdf))
     assert not findings, [item.to_dict() for item in findings]
 
@@ -56,7 +67,9 @@ class TestValidateAgainstThePdf:
     def _case():
         path = CASES / "lm358_soic8" / "spec.gold.json"
         data = _load(path)
-        return data, find_datasheet(data["datasheet"]["sha256"], Path(DATASHEETS))
+        pdf, mode = resolve_datasheet(data["datasheet"], Path(DATASHEETS))
+        assert pdf is not None and mode in ("sha", "rebuilt")
+        return data, pdf
 
     def test_gold_passes_with_the_pdf(self):
         from kicad_partspec import api
@@ -64,13 +77,25 @@ class TestValidateAgainstThePdf:
         data, pdf = self._case()
         assert not failed(api.validate(data, pdf))
 
-    def test_wrong_sha_names_the_right_one(self):
+    def test_a_wrong_sha_still_fails_when_the_file_is_not_the_revision(self):
+        """A vendor rebuild degrades to a named warning; a genuinely wrong file still fails.
+        The revision is blanked here so the scenario is the wrong file, not the rebuild."""
         from kicad_partspec import api
 
         data, pdf = self._case()
         data["datasheet"]["sha256"] = "0" * 64
+        data["datasheet"]["revision"] = "unrelated document"
         findings = [item for item in api.validate(data, pdf) if item.id == "prov.datasheet_sha_mismatch"]
         assert findings and findings[0].expected in findings[0].message
+
+    def test_a_same_revision_rebuild_warns_instead_of_failing(self):
+        """TI re-issued SLOS068AB as new bytes: quotes still checked, the spec's sha256 kept,
+        and the finding says not to rewrite it (what the old FAIL message told you to do)."""
+        from kicad_partspec import api
+
+        data, pdf = self._case()
+        (finding,) = [item for item in api.validate(data, pdf) if item.id == "prov.datasheet_rebuilt"]
+        assert finding.status == WARN and "Do not rewrite" in finding.message
 
     def test_an_invented_quote_is_caught(self):
         from kicad_partspec import api

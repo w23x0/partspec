@@ -29,32 +29,42 @@
 
 在此之前，同一轮还完成了宪法/登记/审计板面/循环驱动的落地（abc572c、7bd1def）。
 
-## 当前板面（已验证）
+## 当前板面（已验证，两种模式）
 
 ```
-规则总数: 28   有测试: 28   通过: 28   未通过: []   退步: []
-未覆盖:   []
+# 不带数据表（历史默认）
+规则总数: 28   有测试: 28   通过: 28   未通过: []   退步: []   未覆盖: []
 gold-spec: 23/23   gold-quotes: skipped   gold-build: 23/23 (20 mods, 3 skipped)
+
+# PARTSPEC_DATASHEETS=~/datasheets（2026-10-13 起首次可用，引文层真实点亮）
+gold-quotes: 23/23 (vendor-rebuilt, name kept: lm358_soic8)
 ```
 
-全量：`639 passed, 27 skipped`，ruff 干净。mypy 在 `tests/` 有 55 个既有报错（stash 基线同样 55，
-非本轮引入；`src/` 干净）。
+板面 28/28 全绿的含义：每条规则都有测试或金标套件，`未覆盖` 历史首次为空。引文层首次以实数
+运行：23/23 全部通过（此前只有 skipped）。
 
-板面 28/28 全绿的含义：每条规则都有测试或金标套件，`未覆盖` 历史首次为空。
+## 数据表（2026-10-13 抓取）
+
+- 位置：`~/datasheets`（仓库外，23 份 PDF，`.gitignore` 不管但刻意不入库）。
+- 获取：`scripts/fetch_datasheets.py`（提交历史见 `[audit]` 相关提交），按各 gold 的
+  `datasheet.url` 抓取并逐份校验 sha256：直连 22/23，`cp2102n` 走 Wayback 哈希命中，
+  `lm358` 为厂商同 revision 重建版（字节不可恢复，引文全过）——回退语义见 ISSUES.md
+  “数据表获取状态与厂商重建版回退”一节，三面（audit/check_gold/api.validate）一致有声。
+- 重取：`.venv/bin/python scripts/fetch_datasheets.py [--wayback] [--force]`。
 
 ## 继续时的三件事（按优先级）
 
-1. **点亮引文层**：PDF 不在仓库。挂上数据表目录后跑
-   `./scripts/audit.sh --datasheets DIR`（或设 `PARTSPEC_DATASHEETS`），`gold-quotes` 应从
-   `skipped` 变为实数。预期全绿；若某 case 引文失败，按仲裁协议处理，不得改测试绕开。
-   PDF 就位后还可收掉 SRC-006 的纯字母引文口子（74hc595 `lead_length`，见 ISSUES.md）。
-2. **MPN-001（唯一 open 议题，硬阻塞于 PDF）**：6 个 gold 的 mpn 不是印刷 orderable
-   （`ADS1115IDGS`/`INA219AxD`/`TLC555xD`/`TPS54202`/`TXS0108EPW` 一类）。两种读法都需逐案
-   核对数据表 addendum：A 按 MUST 改 6 个 gold 的 mpn（走 [GOLD] 协议 + 重跑受影响 round 记分），
-   B 确认数据表确实没印该 orderable 后启用逃生条款并补 review 证据。PDF 到位前无法裁定。
-3. **无人值守循环**：板面 28/28 全绿、无未覆盖，`AGENT_CMD="claude -p" MAX_ROUNDS=20
-   STALL_LIMIT=3 ./scripts/loop.sh` 现在从绿板出发；后续轮次的自然候选（都需新证据或新设计，
-   不是 ISSUES 遗留）：新规则候选题（如"双单位引文须给换算"）、每轮一次的独立审计再跑。
+1. **MPN-001 结案（数据表已就位，阻塞解除）**：`~/datasheets` 已在盘上。逐案核对 6 个 gold 的
+   mpn 与数据表 addendum 的 orderable（`ads1115_vssop10`、`ina219_soic8`、`tlc555_soic8`、
+   `tps54202_sot23`、`txs0108e_tssop20`，加 `ads1015_vssop10` 的兄弟对照）。A（按 MUST 改 gold）
+   走 [GOLD] 协议 + 重跑受影响 round 的 `evals/score.py`；B（逃生条款）需逐案确认"未印"并补
+   review.md 证据。裁定后同步 tests/test_rules.py 的 MPN-001 硬编码表与 scoring 的 mpn 缺位。
+2. **新一轮抽取记分（round 6）**：引文层已实数，`evals/score.py --extracted DIR --datasheets
+   ~/datasheets` 可跑真实 quotes 列。用 `scripts/loop.sh` 同款 headless 方式对新模型跑几个 case，
+   看规则集是否真的约束出免修可用 spec（round 5 基线：4/10）。
+3. **循环的下一形态**：板面对非绿板有效；现在是绿板 + PDF 就位，循环的"未通过"列表为空。
+   若要以循环推进上面两件事，把目标写进 `scripts/prompts/round.md` 的选项（round.md 目前只从
+   板面缺口选目标）。
 
 ## 无人值守启动方式
 

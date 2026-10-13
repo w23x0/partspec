@@ -59,6 +59,29 @@
     变化（gold 12→11；pca9306_run2 usable 翻 NO，因为它记的正是被禁值），其余 run 逐字节不变。
 - 状态：settled（读法 A；金标已删，规则已有机械执行者，板面 `未覆盖: []`）
 
+## 数据表获取状态与"厂商重建版"回退（2026-10-13）
+
+- 事实：23 份 PDF 已按各 gold 的 `datasheet.url` 抓取到 `~/datasheets`（仓库外，`scripts/fetch_datasheets.py`
+  即为抓取+校验工具，直连哈希通过 22/23）。唯一例外 `lm358_soic8`：TI 把同一 revision
+  （页1仍印 `SLOS068AB – REVISED OCTOBER 2024`）重建为新文件，sha 与 gold 记录不同；Wayback
+  20 个快照逐一哈希均不中，gold 当时那份字节不可恢复——但 gold 全部引文在活文件上零 finding
+  （`check_quotes` 实测）。
+- 决定（主会话，用户已授权自行推动）：哈希未命中时按"文档号"回退——`document_number(revision)`
+  取 revision 串里的文献号（`SLOS068AB`），在候选 PDF 第 1 页文本中命中即认定为同 revision 重建版。
+  三个面（`scripts/audit.py` 板面、`evals/check_gold.py`、`api.validate`，MCP 同路径）行为一致：
+  - 命中哈希 → `sha`（原语义，强度不变）；
+  - 回退命中 → `rebuilt`：**引文照常全量校验**，但 `api.validate` 只出 `prov.datasheet_rebuilt`
+    WARN（明写"不得回写 spec 的 sha256——它记录的是 gold 当时构建所用的文件"），审计板面把该 case
+    名字打出来（`gold-quotes: 23/23 (vendor-rebuilt, name kept: lm358_soic8)`）；
+  - 两者都不中 → 原 `prov.datasheet_sha_mismatch`/`prov.datasheet_missing` FAIL。
+  `evals/score.py` 的特判路径**未动**（历史记分与 gold 严格对照，不做回退，避免洗分）。
+- 理由：引文层的保证是"引文出现在所引页面上"，文件字节一致性是 SRC 层的另一条保证；同 revision
+  重建版满足前者、不满足后者，按 AGENTS.md"工具缺失降级为警告而非失败"的先例降级，且降级必须
+  有声（每个界面都打印 case 名）。gold 的 `datasheet.sha256` 一个字不改。
+- 状态：settled（实现：`src/kicad_partspec/verify/quotes.py::resolve_datasheet/document_number/
+  first_page/find_datasheet_rebuilt`；测试：`tests/test_gold.py::TestValidateAgainstThePdf` 与
+  `tests/test_spec_checks.py::test_a_same_revision_rebuild_resolves_by_its_document_number`）
+
 ## MPN-001 六个 gold 记的不是印刷 orderable，MUST 无执行者
 - 现象：reference.md:19-21 要求 mpn 是 addendum 列的 orderable，"不是任何页面上都不出现的 package-only 形式"，
   并拿 `ADS1015IDGS` 作反例。实际 gold：`ads1115_vssop10` = `ADS1115IDGS`（正是该反例句的同形状字符串，
@@ -73,7 +96,12 @@
   编号并 say so in the hand-over"的逃生条款覆盖这些 case，则需逐案确认数据表确实没印该 orderable 并补 review 证据。
 - 证据：spec/rules.json:4-8（MPN-001）、reference.md:19-21、上列 gold 与 review.md 行号。
 - 建议：逐案核对 6 份数据表的 orderable addendum（需要 PDF；本机没有），按 A 或按 B 定；A 走 [GOLD] 协议。
-- 状态：open（来源：round 1 独立审计，本条已由主会话复核证据行号）
+- 状态：open（来源：round 1 独立审计，本条已由主会话复核证据行号）。**阻塞已解除**：2026-10-13
+  23 份数据表已抓取到 `~/datasheets`（见上方"数据表获取状态"一节，22/23 哈希验证 + lm358 同
+  revision 重建版，引文层 23/23 全过）。下一轮即可逐案核对 6 个 gold 的 mpn——A 走 [GOLD] 协议
+  （改 gold + review.md 证据 + 重跑 round1/2/4/5 中受影响 case 的 `evals/score.py`），B 需逐案
+  在数据表上确认"未印 orderable"并补 review 证据。执行侧硬编码表（tests/test_rules.py:191-197 与
+  scoring 不比 mpn）随裁定一并处理。
 
 ## PIN-001 散热垫命名 EP 与 gold 的 PAD/DAP 冲突，登记表只写了半条
 - 现象：reference.md:37 写"an exposed pad is named `EP` and gets no `alt_names`"；rules.json 的 PIN-001

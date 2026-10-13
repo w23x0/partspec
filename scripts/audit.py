@@ -36,9 +36,7 @@ STATE_DIR = ROOT / ".audit"
 STATE_FILE = STATE_DIR / "last.json"
 RULE_TESTS = ROOT / "tests" / "test_rules.py"
 
-NODE_RE = re.compile(
-    r"^tests/test_rules\.py::(?P<node>\S+?)\s+(?P<status>PASSED|FAILED|ERROR|SKIPPED|XFAIL|XPASS)\b"
-)
+NODE_RE = re.compile(r"^tests/test_rules\.py::(?P<node>\S+?)\s+(?P<status>PASSED|FAILED|ERROR|SKIPPED|XFAIL|XPASS)\b")
 RULE_ID_RE = re.compile(r"^test_(?P<module>[A-Z]{2,4})_(?P<number>\d{3})_")
 
 
@@ -48,16 +46,16 @@ def _import_partspec():
     from kicad_partspec import api
     from kicad_partspec.findings import failed
     from kicad_partspec.verify import verify_spec
-    from kicad_partspec.verify.quotes import check_quotes, find_datasheet, page_texts
+    from kicad_partspec.verify.quotes import check_quotes, page_texts, resolve_datasheet
 
-    return api, failed, verify_spec, check_quotes, find_datasheet, page_texts
+    return api, failed, verify_spec, check_quotes, resolve_datasheet, page_texts
 
 
 def _rules() -> list[dict]:
     return json.loads(RULES_FILE.read_text(encoding="utf-8"))["rules"]
 
 
-def _rule_tests() -> dict[str, str]:
+def _rule_tests() -> tuple[dict[str, str], list[str], str]:
     """Run the rule tests once and map rule-id -> status, plus any node without a rule-id."""
     env = dict(os.environ, PYTHONPATH=os.pathsep.join(filter(None, [str(ROOT), os.environ.get("PYTHONPATH")])))
     result = subprocess.run(
@@ -101,7 +99,8 @@ def _rule_tests() -> dict[str, str]:
 
 def _gold_documents() -> list[tuple[str, dict]]:
     return [
-        (path.parent.name, json.loads(path.read_text(encoding="utf-8"))) for path in sorted(CASES.glob("*/spec.gold.json"))
+        (path.parent.name, json.loads(path.read_text(encoding="utf-8")))
+        for path in sorted(CASES.glob("*/spec.gold.json"))
     ]
 
 
@@ -111,20 +110,28 @@ def _suite_gold_spec(verify_spec, failed) -> tuple[int, int, list[str]]:
     return len(documents) - len(bad), len(documents), bad
 
 
-def _suite_gold_quotes(check_quotes, find_datasheet, page_texts, datasheets: Path | None) -> tuple[str, list[str]]:
+def _suite_gold_quotes(
+    check_quotes, resolve_datasheet, page_texts, datasheets: Path | None
+) -> tuple[str, list[str], list[str]]:
     if datasheets is None or shutil.which("pdftotext") is None:
-        return "skipped", []
+        return "skipped", [], []
     bad = []
+    rebuilt = []
     total = 0
     for case, data in _gold_documents():
-        pdf = find_datasheet(data["datasheet"]["sha256"], datasheets)
+        pdf, mode = resolve_datasheet(data["datasheet"], datasheets)
+        if mode == "rebuilt":
+            rebuilt.append(case)
         if pdf is None:
             bad.append(f"{case}: no matching PDF")
             continue
         total += 1
         if check_quotes(data, page_texts(pdf)):
             bad.append(case)
-    return f"{total - len(bad)}/{total}", bad
+    line = f"{total - len(bad)}/{total}"
+    if rebuilt:
+        line += f" (vendor-rebuilt, name kept: {', '.join(rebuilt)})"
+    return line, bad, rebuilt
 
 
 def _suite_gold_build(api, failed) -> tuple[str, list[str]]:
@@ -197,9 +204,11 @@ def main() -> int:
     rules = _rules()
     statuses, unruled, _ = _rule_tests()
 
-    api, failed, verify_spec, check_quotes, find_datasheet, page_texts = _import_partspec()
+    api, failed, verify_spec, check_quotes, resolve_datasheet, page_texts = _import_partspec()
     spec_ok, spec_total, spec_bad = _suite_gold_spec(verify_spec, failed)
-    quote_line, quote_bad = _suite_gold_quotes(check_quotes, find_datasheet, page_texts, args.datasheets)
+    quote_line, quote_bad, quote_rebuilt = _suite_gold_quotes(
+        check_quotes, resolve_datasheet, page_texts, args.datasheets
+    )
     build_line, build_bad = _suite_gold_build(api, failed)
 
     previous = _previous()
@@ -230,6 +239,8 @@ def main() -> int:
         print(f"无规则号: {unruled}")
     print(f"gold-spec:   {spec_ok}/{spec_total}")
     print(f"gold-quotes: {quote_line}")
+    if quote_rebuilt:
+        print(f"gold-quotes (vendor-rebuilt, not byte-identical to datasheet.sha256): {', '.join(quote_rebuilt)}")
     print(f"gold-build:  {build_line}")
     for case in spec_bad + quote_bad + build_bad:
         print(f"  failing: {case}")

@@ -9,9 +9,34 @@ audit in ``scripts/audit.py`` can attribute failures per rule.
 
 import copy
 import json
+import os
+from pathlib import Path
+
+import pytest
 
 from kicad_partspec.cli import main
 from kicad_partspec.verify import verify_spec
+from kicad_partspec.verify.quotes import (
+    check_quotes,
+    document_number,
+    first_page,
+    page_texts,
+    resolve_datasheet,
+    sha256_of,
+)
+
+DATASHEETS = os.environ.get("PARTSPEC_DATASHEETS")
+CASES = Path(__file__).resolve().parent.parent / "evals" / "cases"
+
+
+def gold_datasheet(case):
+    return json.loads((CASES / case / "spec.gold.json").read_text(encoding="utf-8"))["datasheet"]
+
+
+def check_quotes_gold(case, datasheets):
+    data = json.loads((CASES / case / "spec.gold.json").read_text(encoding="utf-8"))
+    pdf, _ = resolve_datasheet(data["datasheet"], datasheets)
+    return check_quotes(data, page_texts(pdf))
 
 
 def src(page=1, quote="Table 1"):
@@ -73,3 +98,35 @@ def test_cli_exit_codes(tmp_path, capsys):
     broken.write_text("{not json")
     assert main(["validate", str(broken)]) == 2
     assert main(["validate", str(tmp_path / "missing.json")]) == 2
+
+
+# --- datasheet resolution: hash first, same-revision rebuild as a named fallback ---------------------
+
+
+@pytest.mark.parametrize(
+    "revision, expected",
+    [
+        ("SLOS068AB (Rev. AB, October 2024)", "SLOS068AB"),
+        ("DS20001203U (Revision U, 11/2013)", "DS20001203U"),
+        ("SLVSAG7F (Rev. F, November 2021); RGT0016C drawing dated 07/2025", "SLVSAG7F"),
+        # no literature number: the RP2040 sheet names a build, Nexperia's a date
+        ("build-date 2025-02-20, build-version 3184e62-clean (no revision letter printed)", None),
+        ("Rev. 12 — 20 March 2024", None),
+    ],
+)
+def test_document_number_reads_the_literature_number(revision, expected):
+    assert document_number(revision) == expected
+
+
+@pytest.mark.skipif(not DATASHEETS, reason="PARTSPEC_DATASHEETS is not set; the PDFs live outside the repo")
+def test_a_same_revision_rebuild_resolves_by_its_document_number():
+    """The lm358 gold cites bytes no Wayback snapshot holds; the vendor re-issued the same
+    revision as a new file, and the fallback must name that, not pretend the hash matched."""
+    directory = Path(DATASHEETS)
+    sheet = gold_datasheet("lm358_soic8")
+    pdf, mode = resolve_datasheet(sheet, directory)
+    assert mode == "rebuilt"
+    assert pdf is not None
+    assert sha256_of(pdf) != sheet["sha256"]
+    assert "SLOS068AB" in first_page(pdf)
+    assert not check_quotes_gold("lm358_soic8", directory)
