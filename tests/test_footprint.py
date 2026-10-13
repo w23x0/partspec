@@ -684,11 +684,11 @@ def test_cli_build_writes_symbol_and_footprint(tmp_path, capsys):
     assert main(["build", str(spec_path), "--out", str(tmp_path / "out"), "--no-kicad", "--lib-name", "mylib"]) == 0
     report = json.loads(capsys.readouterr().out)
     names = sorted(Path(f).name for f in report["files"])
-    assert names == ["LM358.kicad_sym", "SOIC-8_3.9x4.9mm_P1.27mm.kicad_mod"]
+    assert names == ["LM358DR.kicad_sym", "SOIC-8_3.9x4.9mm_P1.27mm.kicad_mod"]
     assert (tmp_path / "out" / "mylib.pretty" / "SOIC-8_3.9x4.9mm_P1.27mm.kicad_mod").is_file()
-    assert 'property "Footprint" "mylib:SOIC-8_3.9x4.9mm_P1.27mm"' in (tmp_path / "out" / "LM358.kicad_sym").read_text(
-        encoding="utf-8"
-    )
+    assert 'property "Footprint" "mylib:SOIC-8_3.9x4.9mm_P1.27mm"' in (
+        tmp_path / "out" / "LM358DR.kicad_sym"
+    ).read_text(encoding="utf-8")
 
 
 def test_cli_build_without_a_land_pattern_still_builds_the_symbol(tmp_path, capsys):

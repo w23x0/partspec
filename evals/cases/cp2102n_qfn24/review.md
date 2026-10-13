@@ -114,3 +114,9 @@ Two things that look like contradictions but are not, recorded so a reviewer doe
   `out/partspec.pretty/QFN-24-1EP_4x4mm_P0.5mm_EP2.55x2.55mm.kicad_mod`.
 - The generated footprint pads sit at ±1.95 with size 0.85 × 0.30 and a 2.55 × 2.55 EP — i.e. the datasheet's own land
   pattern, not KiCad's IPC-derived one, as intended.
+
+## MPN (checked 2026-10-14, no change)
+
+`CP2102N-A02-GQFN24` is kept. Silabs' feature list and ordering information (p.2) prints the
+string in its part-number table, and it follows the p.1 numbering decoder (family, hardware
+revision A, firmware A02, temperature grade G, package GQFN24).

@@ -203,3 +203,8 @@ contradictory: Figure 3 and Table 621 agree that it is `DVDD`.
 - `kicad-partspec build spec.gold.json --out out --concise` → `passed: true`, 0 failures; emits
   `out/RP2040.kicad_sym` (57 pins) and
   `out/partspec.pretty/QFN-56-1EP_7x7mm_P0.4mm_EP3.2x3.2mm.kicad_mod` (57 pads).
+## MPN (checked 2026-10-14, no change)
+
+`RP2040` is kept under the escape clause: the Raspberry Pi datasheet has no ordering information
+section at all — `RP2040` is the only name the sheet prints for the part, which is precisely the
+"prints no orderable, use the number it does print" case in `reference.md`'s mpn paragraph.

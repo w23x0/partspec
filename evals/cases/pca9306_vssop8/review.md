@@ -90,3 +90,9 @@ of the KiCad file.
 `kicad-partspec build --out out --concise` passes with 0 failures and produces
 `PCA9306.kicad_sym` plus the footprint `VSSOP-8_2.3x2.0mm_P0.5mm.kicad_mod` (8 pads, 0.85 × 0.3,
 pitch 0.5, row centres ±1.55) built from the datasheet land pattern on p.32.
+## MPN (fixed 2026-10-14, `[GOLD]`)
+
+`PCA9306` → `PCA9306DCUR`. The old value was the device name (prose only). The PACKAGE OPTION
+ADDENDUM (p.24) prints `PCA9306DCUR  Active  Production  VSSOP (DCU) | 8  3000 | LARGE T&R` for
+this case's DCU package (`PCA9306DCUR.A`, small-reel `PCA9306DCUT` are its variants; the DCT
+SSOP rows are the other package). MPN-001 takes the printed orderable.

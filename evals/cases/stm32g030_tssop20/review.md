@@ -110,3 +110,10 @@ KiCad footprint pad count (20), pitch (0.65) and body size (4.4 × 6.5) agree wi
 4. No contradiction was found between Figure 4 (page 29) and Table 12 (pages 31–34). All 20 TSSOP20
    pin numbers were cross-checked in both, and the two agree exactly — including the non-obvious
    bonds at pins 1/2 (PB9 is on pin **2**, not pin 1), 15 and 19.
+## MPN (checked 2026-10-14, no change)
+
+`STM32G030F6P6` is kept. ST prints no literal ordering table with this string; the ordering
+information (p.96) is a part-number decoder, and composing it for this case — family STM32,
+subfamily G030, pin count F (20), flash 6 (32 Kbytes), package P (TSSOP), temperature 6 (-40 to
++85 °C) — yields exactly `STM32G030F6P6`. The decoder's own example row (K8T6) is a different
+pin/flash/package combination, not a different ordering scheme.

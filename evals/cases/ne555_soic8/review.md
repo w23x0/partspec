@@ -79,9 +79,12 @@ but built from TI's land pattern (pad 1.55 × 0.6 at x = ±2.7) rather than IPC-
    only drawing with NC labels, and the D-package figure has all 8 pins named.
 11. **Pin 5's `CONT` is not an analog reference.** The skill would map a plain "analog reference" pin to
     `passive`, but this pin prints a direction ("Input/output"), so the direction wins over the passive rule.
-12. **Family `SOIC`, `mpn` `NE555`.** The datasheet names the package "D (SOIC)" and the drawing title is
-    "SOIC - 1.75 mm max height". `NE555` is the device name; the SOIC orderables are `NE555DR` / `NE555DRG4`, but
-    the gold uses the base part number as `lm358_soic8` does for the SOIC-8 LM358 case.
+12. **Family `SOIC`, `mpn` `NE555DR`** (fixed 2026-10-14, `[GOLD]`). The old value `NE555` was the
+    device name, kept because "the lm358 gold uses the bare device name"; that premise was checked
+    mechanically and is false — TI's addendum lists no bare `NE555` (nor bare `LM358`) row. The
+    ordering-information table (p.21) prints `NE555DR  Active  Production  SOIC (D) | 8  2500 |
+    LARGE T&R` for this case's package (also `NE555DR.A`, `NE555DR1G4`; the `NA555`/`SA555`/`SE555`
+    rows are other manufacturers' second sources). MPN-001 takes the printed orderable.
 13. **`.008 [0.2]`-class pin-1 identifier and the 0°–8° / 0°–15° draft angles, the solder-mask expansion
     (`.0028` max/min), and the paste aperture note were all skipped** — none maps to a name in the reference's
     dimension list.

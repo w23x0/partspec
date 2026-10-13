@@ -90,7 +90,7 @@ def test_groups_become_units_with_power_last():
     spec = _spec("lm358_soic8")
     assert unit_groups(spec.pins) == ["A", "B", "power"]
     symbol = children(parse_sexpr(render_library(spec))[0], "symbol")[0]
-    assert [unit[1] for unit in _units(symbol)] == ["LM358_1_1", "LM358_2_1", "LM358_3_1"]
+    assert [unit[1] for unit in _units(symbol)] == ["LM358DR_1_1", "LM358DR_2_1", "LM358DR_3_1"]
     assert {first_child(p, "number")[1] for p in children(_units(symbol)[2], "pin")} == {"4", "8"}
 
 
@@ -218,7 +218,7 @@ def test_planted_error_is_detected(case, mutate, expected):
 
 def test_wrong_symbol_name_and_unparseable_text():
     spec = _spec("lm358_soic8")
-    assert "symbol.name_mismatch" in _ids(check_symbol(spec, render_library(spec).replace('"LM358"', '"OTHER"', 1)))
+    assert "symbol.name_mismatch" in _ids(check_symbol(spec, render_library(spec).replace('"LM358DR"', '"OTHER"', 1)))
     assert "symbol.unparseable" in _ids(check_symbol(spec, "(kicad_symbol_lib (symbol"))
     assert "symbol.not_a_library" in _ids(check_symbol(spec, "(something)"))
 
@@ -407,7 +407,7 @@ def test_cli_build_writes_a_verified_library(tmp_path, capsys):
     report = json.loads(capsys.readouterr().out)
     assert report["passed"] is True
     written = Path(report["files"][0])
-    assert written.name == "LM358.kicad_sym" and written.read_text(encoding="utf-8").startswith("(kicad_symbol_lib")
+    assert written.name == "LM358DR.kicad_sym" and written.read_text(encoding="utf-8").startswith("(kicad_symbol_lib")
 
 
 def test_cli_build_refuses_a_spec_that_fails_validation(tmp_path, capsys):

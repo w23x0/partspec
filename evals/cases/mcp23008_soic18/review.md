@@ -77,3 +77,11 @@ underlying characters are `VSS`, so KiCad's `VSS` is correct); `GP0…GP7` and `
    TABLE 1-1 if you search for the SOIC column without reading the figure.
 4. **Page 2 label casing.** The ground pin is rendered `Vss` in the page image but its text-layer
    characters are `VSS`. Not a contradiction, but the image alone would suggest the wrong name.
+## MPN (fixed 2026-10-14, `[GOLD]`)
+
+`MCP23008` → `MCP23008T-E/SO`. The old value was the device name. Microchip's PRODUCT
+IDENTIFICATION SYSTEM (p.41) builds orderables as device + temp range + package and gives the
+literal example `c) MCP23008T-E/SO: Tape and Reel, Extended Temperature, 18LD SOIC package` —
+exactly this case's package (`E` = extended temp, `SO` = 18LD SOIC, `T` = tape and reel; the
+other examples are the PDIP `MCP23008-E/P` and the SSOP `MCP23008-E/SS`). MPN-001 takes the
+printed orderable.

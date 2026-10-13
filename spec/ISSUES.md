@@ -96,12 +96,22 @@
   编号并 say so in the hand-over"的逃生条款覆盖这些 case，则需逐案确认数据表确实没印该 orderable 并补 review 证据。
 - 证据：spec/rules.json:4-8（MPN-001）、reference.md:19-21、上列 gold 与 review.md 行号。
 - 建议：逐案核对 6 份数据表的 orderable addendum（需要 PDF；本机没有），按 A 或按 B 定；A 走 [GOLD] 协议。
-- 状态：open（来源：round 1 独立审计，本条已由主会话复核证据行号）。**阻塞已解除**：2026-10-13
-  23 份数据表已抓取到 `~/datasheets`（见上方"数据表获取状态"一节，22/23 哈希验证 + lm358 同
-  revision 重建版，引文层 23/23 全过）。下一轮即可逐案核对 6 个 gold 的 mpn——A 走 [GOLD] 协议
-  （改 gold + review.md 证据 + 重跑 round1/2/4/5 中受影响 case 的 `evals/score.py`），B 需逐案
-  在数据表上确认"未印 orderable"并补 review 证据。执行侧硬编码表（tests/test_rules.py:191-197 与
-  scoring 不比 mpn）随裁定一并处理。
+- 状态：settled（读法 A，2026-10-14 主会话执行，用户已授权自行推动）。**先机械全 Corpus 扫描**
+  （token-boundary 搜 mpn 独立出现 + 解析各厂商 ordering 表），发现不止审计员点名的 6 个：
+  23 gold 里 13 个 mpn 不是印刷 orderable（9 个 TI + 2 个 Microchip + lm358/ne555 两个
+  “device name 流派”），5 个本就是 orderable，5 个属“无 literal 字符串”类别（rp2040 无订购
+  信息、atmega328p 汽车版只印 AZ/MZ、stm32g030 由解码器拼装、74hc595d/nexperia Type 1 与
+  cp2102n/Silabs 表内印出，均保留并补 review 证据）。**13 个 fix 走 [GOLD]**（各 review.md
+  写明页码 + 逐字 orderable 行 + 选择理由）：ads1115→ADS1115IDGSR、ina219→INA219AIDR、
+  tlc555→TLC555CDR（保留原 review 的 C 级意图）、tps54202→TPS54202DDCR、
+  txs0108e→TXS0108EPWR、lm358→LM358DR（新建 review.md：旧“LM358 无后缀即可订购”的前提被
+  机械证伪）、ne555→NE555DR、drv8871→DRV8871DDAR（DDA 行 Obsolete）、uln2003a→ULN2003APWR、
+  ina226→INA226AIDGSR、pca9306→PCA9306DCUR、24lc256→24LC256T-I/SN（Microchip 产品标识
+  系统示例 g）、mcp23008→MCP23008T-E/SO（示例 c）。连带迁移：`tests/test_rules.py`
+  MPN-001 表 3→16 项；6 个断言生成文件/单元名的测试夹具随 mpn 迁移（test_symbol/
+  test_footprint/test_mcp 的 LM358→LM358DR）。重跑证据 `evals/runs/mpn001_goldfix_rescore.md`：
+  mpn 零记分影响，唯一位移是昨日 DIM-004 的残留（含补录 uln2003a_run2）。escape 条款两个
+  case（rp2040/atmega328p）与新证据类（stm32/74hc595/cp2102n）的保留理由写入各 review。
 
 ## PIN-001 散热垫命名 EP 与 gold 的 PAD/DAP 冲突，登记表只写了半条
 - 现象：reference.md:37 写"an exposed pad is named `EP` and gets no `alt_names`"；rules.json 的 PIN-001

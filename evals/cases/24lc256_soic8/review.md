@@ -177,3 +177,11 @@ reference.md's "a value marked MAX gets only max") are both defensible.
   and asks for `pitch`, `land_pad_length`, `land_pad_width`, `land_span` and
   `body_length`, all of which are readable on pages 18 and 19 but none of
   which can be cited from this PDF's text layer.
+## MPN (fixed 2026-10-14, `[GOLD]`)
+
+`24LC256` → `24LC256T-I/SN`. The old value was the device family name printed on the title page
+(`24AA256/24LC256/24FC256`), not an orderable. Microchip's PRODUCT IDENTIFICATION SYSTEM (p.39)
+builds orderables as device + temperature range + package and gives the literal example
+`g) 24LC256T-I/SN: Tape and Reel, Industrial Temp., SOIC package` — `T` tape-and-reel, `I`
+industrial temp, `SN` the 8-lead SOIC of this case (the other examples: `24LC256-I/SN`,
+`24LC256-I/MS`, `24LC256-E/P`). MPN-001 takes the printed orderable.

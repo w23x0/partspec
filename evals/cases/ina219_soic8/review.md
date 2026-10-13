@@ -98,12 +98,17 @@ device). The gold therefore uses `bidirectional`, which is also what KiCad uses.
    top view and the bottom view on the render: the `.228-.244` arrow runs across the lead rows
    (→ `overall_width`), `.189-.197` runs along them (→ `body_length`), `.150-.157` is the width across
    between the rows (→ `body_width`). Same drawing and same convention as the `lm358_soic8` gold.
-6. **`mpn` = `INA219AxD`.** The datasheet's own orderable SOIC-8 part numbers are `INA219AID` /
-   `INA219AIDR` and `INA219BID` / `INA219BIDR` (page 29, PACKAGE OPTION ADDENDUM) — there is no bare
-   "INA219" in SOIC. I used `INA219AxD`, TI's/KiCad's combined-grade notation for "INA219, accuracy
-   grade A, SOIC-8", so the gold lines up 1:1 with the official KiCad symbol name. If the grader
-   expects a literal orderable number, `INA219AID` is the substitution. (The `lm358_soic8` gold uses
-   the bare `LM358` because LM358 is orderable without a package suffix; that is why the two differ.)
+6. **`mpn` = `INA219AIDR`** (fixed 2026-10-14, `[GOLD]`). The old value `INA219AxD` is a wildcard
+   form: a token-boundary search of the whole sheet finds it on no page. The review's earlier
+   substitution (`INA219AID`) is likewise not printed — the PACKAGE OPTION ADDENDUM (p.29) lists
+   only suffixed orderables: `INA219AIDR  Active  Production  SOIC (D) | 8  2500 | LARGE T&R` for
+   this case's SOIC-8 package (also `INA219AIDR.A/.B`, `INA219AIDRG4`, and the B-accuracy-grade
+   `INA219BIDR` family). `A` is the base accuracy grade and the one the datasheet lists first; the
+   spec records no accuracy fact that would select B. MPN-001 and the `reference.md` mpn paragraph
+   make the addendum's orderable the value, and the "no orderable printed" escape clause does not
+   apply because the sheet prints them. (The lm358 gold's "LM358 is orderable without a package
+   suffix" premise this review used to defer to was checked mechanically and is false — see
+   `lm358_soic8`'s review; that gold was fixed in the same round.)
 7. **`VS` name spelling.** The datasheet sets the S as a subscript (`V_S`); `pdftotext` and KiCad both
    yield `VS`. Used `VS`.
 8. **No `group` field.** `reference.md` reserves `group` for parts with separate units. INA219 is a

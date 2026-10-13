@@ -250,10 +250,33 @@ def test_MPN_001_the_mpn_is_one_printed_token(path):
 
 @pytest.mark.parametrize(
     ("case", "expected"),
-    [("ads1015_vssop10", "ADS1015IDGSR"), ("tps5430_soic8", "TPS5430DDA"), ("tca9548a_tssop24", "TCA9548APWR")],
+    [
+        ("ads1015_vssop10", "ADS1015IDGSR"),
+        ("tps5430_soic8", "TPS5430DDA"),
+        ("tca9548a_tssop24", "TCA9548APWR"),
+        ("ads1115_vssop10", "ADS1115IDGSR"),
+        ("ina219_soic8", "INA219AIDR"),
+        ("tlc555_soic8", "TLC555CDR"),
+        ("tps54202_sot23", "TPS54202DDCR"),
+        ("txs0108e_tssop20", "TXS0108EPWR"),
+        ("lm358_soic8", "LM358DR"),
+        ("ne555_soic8", "NE555DR"),
+        ("drv8871_soic8", "DRV8871DDAR"),
+        ("uln2003a_tssop16", "ULN2003APWR"),
+        ("ina226_vssop10", "INA226AIDGSR"),
+        ("pca9306_vssop8", "PCA9306DCUR"),
+        ("24lc256_soic8", "24LC256T-I/SN"),
+        ("mcp23008_soic18", "MCP23008T-E/SO"),
+    ],
 )
 def test_MPN_001_the_orderable_keeps_its_suffix(case, expected):
-    """The three golds whose orderable is not the bare device name: package and reel suffixes stay on."""
+    """The golds whose orderable is not the bare device name: the printed package/reel orderable stays on.
+
+    The 2026-10-14 round added the thirteen cases that had recorded device names or wildcard forms;
+    each cites its orderable row in the case's review.md. The two sheets with no literal ordering
+    string (stm32g030 decoder-composed, atmega328p automotive-only) and the one with no ordering
+    information at all (rp2040) are covered by their review notes, not this table.
+    """
     assert gold(case)["mpn"] == expected
 
 

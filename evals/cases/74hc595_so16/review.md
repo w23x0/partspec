@@ -129,3 +129,10 @@ KiCad pads (1.95 × 0.6 at ±2.475/±4.445) are consistent with the datasheet's 
   the `A3` column of the min row. The rendered image shows it under `b_p`, which is what the
   gold uses (`lead_width` 0.31–0.51). A text-only extraction would have produced a wrong
   `lead_width`.
+
+## MPN (checked 2026-10-14, no change)
+
+`74HC595D` is kept. Nexperia's ordering information (p.2, Table 1) lists the type number
+`74HC595D` itself for `-40 °C to +125 °C / SO16 / SOT109-1`, so the recorded value is the
+sheet's own orderable type number (the packing option `,653` is a separate reel suffix, not part
+of the type number).

@@ -140,3 +140,11 @@ this PDF with `check_gold`'s quote check (whitespace-collapsed `pdftotext -layou
 `kicad-partspec build` produces `DRV8871.kicad_sym` and
 `partspec.pretty/SOIC-8_3.9x4.9mm_P1.27mm.kicad_mod` (9 pads: 1–8 roundrect at x = ±2.7, pitch 1.27, 1.55 × 0.6 mm,
 plus a 2.95 × 2.95 mm rectangular EP at the origin). `kicad-partspec verify` on the two generated files passes.
+## MPN (fixed 2026-10-14, `[GOLD]`)
+
+`DRV8871` → `DRV8871DDAR`. The old value was the device name; a token-boundary search finds it
+only in prose, never as an orderable. The PACKAGE OPTION ADDENDUM (p.18) prints
+`DRV8871DDAR  Active  Production  SO PowerPAD (DDA) | 8  2500 | LARGE T&R` for this case's
+package; the `DRV8871DDA` tube row is marked **Obsolete**, so `DDAR` is the active orderable
+(`DRV8871DDAR.A/.B`, `DRV8871DDARG4` are its grades/grades-plus-reel variants). MPN-001 takes the
+printed orderable; the "none printed" escape clause does not apply.

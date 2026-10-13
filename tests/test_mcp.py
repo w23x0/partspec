@@ -126,7 +126,7 @@ def test_build_then_verify_round_trip(workspace):
                 "partspec_verify",
                 {
                     "spec_path": "lm358.json",
-                    "symbol_path": "out/LM358.kicad_sym",
+                    "symbol_path": "out/LM358DR.kicad_sym",
                     "footprint_path": "out/partspec.pretty/SOIC-8_3.9x4.9mm_P1.27mm.kicad_mod",
                     "check_kicad": HAS_KICAD,
                 },
@@ -136,21 +136,21 @@ def test_build_then_verify_round_trip(workspace):
 
     built, verified = _run(workspace, calls)
     assert built["passed"] is True
-    assert sorted(Path(f).name for f in built["files"]) == ["LM358.kicad_sym", "SOIC-8_3.9x4.9mm_P1.27mm.kicad_mod"]
+    assert sorted(Path(f).name for f in built["files"]) == ["LM358DR.kicad_sym", "SOIC-8_3.9x4.9mm_P1.27mm.kicad_mod"]
     assert verified["passed"] is True and verified["failures"] == 0
 
 
 def test_verify_catches_a_file_that_disagrees_with_the_spec(workspace):
     async def calls(session):
         await session.call_tool("partspec_build", {"spec_path": "lm358.json", "out_dir": "out", "check_kicad": False})
-        text = (workspace / "out" / "LM358.kicad_sym").read_text(encoding="utf-8")
-        (workspace / "out" / "LM358.kicad_sym").write_text(
+        text = (workspace / "out" / "LM358DR.kicad_sym").read_text(encoding="utf-8")
+        (workspace / "out" / "LM358DR.kicad_sym").write_text(
             text.replace('(number "3"', '(number "30"'), encoding="utf-8"
         )
         return _payload(
             await session.call_tool(
                 "partspec_verify",
-                {"spec_path": "lm358.json", "symbol_path": "out/LM358.kicad_sym", "check_kicad": False},
+                {"spec_path": "lm358.json", "symbol_path": "out/LM358DR.kicad_sym", "check_kicad": False},
             )
         )
 

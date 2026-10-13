@@ -109,3 +109,10 @@ None of these touch the pin table or the mechanical values recorded in the gold.
 `kicad-partspec build spec.gold.json --out out --concise` → `passed: true`, 0 failures,
 produced `out/INA226.kicad_sym` and
 `out/partspec.pretty/VSSOP-10_3.0x3.0mm_P0.5mm.kicad_mod`.
+## MPN (fixed 2026-10-14, `[GOLD]`)
+
+`INA226` → `INA226AIDGSR`. The old value was the device name; the sheet prints orderables only
+with suffixes. The PACKAGE OPTION ADDENDUM (p.34) prints `INA226AIDGSR  Active  Production
+VSSOP (DGS) | 10  2500 | LARGE T&R` for this case's package (`INA226AIDGSR.A/.B`,
+`INA226AIDGSRG4`, and small-reel `INA226AIDGST` are its variants). Accuracy grade A is the base
+grade listed first; the spec records no accuracy fact selecting B.

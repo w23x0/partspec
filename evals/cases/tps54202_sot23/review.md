@@ -116,9 +116,12 @@ differ. Pitch, body size and pad width agree.
     `SOP-6_1.6x2.9mm_P0.95mm.kicad_mod`, but that is a family name the datasheet does not use, so the
     spec keeps `"SOT"`. Flagged for the eval author: **the installed tool cannot emit a footprint for a
     SOT-23.**
-12. **`mpn` = `"TPS54202"`** (the device name, matching the `lm358_soic8` gold convention of no package
-    suffix). The orderable parts are `TPS54202DDCR` / `TPS54202DDCT` (p. 24); the KiCad symbol this
-    datasheet is paired with is `TPS54202DDC`.
+12. **`mpn` = `TPS54202DDCR`** (fixed 2026-10-14, `[GOLD]`). The old value was the device name,
+    deferred to the "no package suffix" lm358 convention, which a mechanical check disproved: TI's
+    addendum (p.24) prints `TPS54202DDCR  Active  Production  SOT-23-6 (DDC) | 6  3000 | LARGE T&R`
+    for this case's package (also `TPS54202DDCR.A/.B` and the small-reel `TPS54202DDCT`). `TPS54202`
+    itself appears on many pages but only as the prose device name, never as an orderable;
+    MPN-001 takes the addendum's orderable and the "none printed" escape clause does not apply.
 13. **`status: inferred`** on pins 1 and 3 only (`power_in` chosen through the supply/ground rows of the
     type table) and on `land_span`.
 

@@ -174,3 +174,10 @@ re-decided.
    `4.5/4.3`, `0.30/0.17`, `0.75/0.50` and `0.15/0.05`. A nominal equal to the lower limit of its own
    range is not a reading any convention supports, and the midpoint 6.4 is printed nowhere. Status stays
    `inferred`; page and quote are unchanged.
+
+## MPN (fixed 2026-10-14, `[GOLD]`)
+
+`ULN2003A` → `ULN2003APWR`. The old value was the device name (prose only, never an orderable).
+The PACKAGE OPTION ADDENDUM (p.24) prints `ULN2003APWR  Active  Production  TSSOP (PW) | 16
+2000 | LARGE T&R` for this case's PW package (the `A`-variant rows `ULN2003AIPWR`/`.A` are the
+other temp grade; `ULN2003ADR` is SOIC-16). MPN-001 takes the printed orderable.

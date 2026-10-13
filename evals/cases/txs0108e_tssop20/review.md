@@ -150,11 +150,14 @@ and B sides of a level translator are two views of one bidirectional channel set
 amplifier units, and KiCad's symbol draws a single box. `group` is omitted everywhere, including
 for the supplies. Pin order in the spec is ascending by pin number.
 
-### 2.9 MPN `TXS0108EPW`
+### 2.9 MPN `TXS0108EPWR` (fixed 2026-10-14, `[GOLD]`)
 
 The task asks for the PW (TSSOP-20) option. The datasheet's orderable part is `TXS0108EPWR`
-(tape-and-reel, p.26/27); `TXS0108EPW` is the package-level part number and is what KiCad's
-official symbol uses, so the gold uses it.
+(tape-and-reel, ordering-information table p.21: `TXS0108EPWR  ...  TSSOP (PW) | 20  2000 | LARGE
+T&R`, with `TXS0108EPWRG4` the other PW orderable). The old gold recorded `TXS0108EPW`, the
+package-level part number that KiCad's official symbol uses; a token-boundary search finds
+`TXS0108EPW` on no page as a standalone string (only as the prefix of `TXS0108EPWR`), so under
+MPN-001 it was not eligible — the gold now records the printed orderable.
 
 ## 3. Things in the datasheet that contradict themselves, or that are traps
 

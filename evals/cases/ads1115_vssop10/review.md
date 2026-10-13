@@ -36,6 +36,12 @@ Sources:
 - Pitch 0.5 mm — agrees (datasheet `8X 0.5`, KiCad pads at 0.5 mm steps).
 - Body 3.0 × 3.0 mm — agrees within the datasheet's 2.9-3.1 mm limits (KiCad fab outline ±1.5).
 - `mpn` `ADS1115IDGS` — same string as KiCad's symbol Value.
+  **Superseded 2026-10-14 (`[GOLD]`)**: MPN-001 requires the addendum's orderable, and a
+  token-boundary search of the whole sheet finds `ADS1115IDGS` nowhere as a standalone string (it
+  exists only as the prefix of `ADS1115IDGSR`/`ADS1115IDGST`). The PACKAGE OPTION ADDENDUM row
+  for this case's package (p.42) prints `ADS1115IDGSR  Active  Production  VSSOP (DGS) | 10
+  2500 | LARGE T&R`; the gold now records `ADS1115IDGSR`, matching the sibling
+  `ads1015_vssop10` gold that already used the printed orderable.
 - Not comparable: KiCad's courtyard (±2.95 × ±1.8) and reference/silk placement are
   KiCad constructs, not datasheet dimensions. Pad corner radius `(R0.05) TYP` (p.52) has no
   dimension name in the reference and was left out.

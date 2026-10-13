@@ -74,13 +74,15 @@ those pad figures taken from the datasheet land pattern, not from KiCad.
 
 ## 2. Values I had to interpret
 
-1. **`mpn` = `TLC555xD`.** The datasheet's own orderable SOIC-8 numbers are `TLC555CD`,
-   `TLC555ID`, `TLC555QD`, `TLC555QDR`, `TLC555QDRG4` (page 30, PACKAGE OPTION ADDENDUM);
-   there is no bare "TLC555" in SOIC. `x` is TI's grade wildcard (C/I/Q), so `TLC555xD` is
-   "TLC555, any grade, D (SOIC-8) package" and lines up 1:1 with the KiCad symbol name.
-   `TLC555CD` is the substitution if a literal orderable number is preferred. (Same reasoning as
-   `INA219AxD` in `ina219_soic8`; `lm358_soic8` uses the bare `LM358` because LM358 is orderable
-   without a package suffix — that is why the golds differ.)
+1. **`mpn` = `TLC555CDR`** (fixed 2026-10-14, `[GOLD]`). The old value `TLC555xD` is TI's grade
+   wildcard and appears on no page. This review's earlier substitution (`TLC555CD`) is also not
+   printed: the PACKAGE OPTION ADDENDUM (p.29) lists `TLC555CDR  Active  Production  SOIC (D) | 8
+   2500 | LARGE T&R` for this case's SOIC-8 package. The review's recorded intent was the C
+   (commercial) grade, and `TLC555CDR` is that grade's printed orderable; the I/Q grades print as
+   `TLC555IDR` / `TLC555QDR`. MPN-001 and the `reference.md` mpn paragraph take the printed
+   orderable; the "none printed" escape clause does not apply. (The `lm358_soic8` premise this
+   review leaned on — "LM358 is orderable without a package suffix" — was checked mechanically and
+   is false; see that gold's review, fixed in the same round.)
 2. **`CONT` is `input`, not an output (page 3).** Its description says "Outputs 2/3 VDD"; I read
    that as describing the internal threshold reference the pin *controls*, because the printed
    TYPE cell says `Input` and the pin is driven from outside in every application figure
