@@ -98,7 +98,15 @@
   B 规则改为必须省略，同步 README。
 - 证据：reference.md:55-56、tests/test_skill_rules.py:60-67、tests/test_rules.py:281-292、evals/README.md:323-325。
 - 建议：改测试需人类确认（涉及既有断言）；注意 round 1/2 的评分历史上按 B 罚过 run（evals/README.md:323-325）。
-- 状态：open（来源：round 1 独立审计，证据行号与正文均已复核）
+- 状态：settled（取读法 A，2026-10-13 主会话执行，用户已授权自行推动）：规则保留"可选"不变
+  （reference.md 是权威正文且措辞守卫钉住该句），把"测试比规则强"的三处清零——
+  1. `tests/test_rules.py::test_PIN_004_lone_supplies_may_stay_ungrouped` 从"必须无 group"改为
+     "group 只能是 absent 或 `power`"，NE555 两种读法都过（用户此前观察到的问题："给孤立电源
+     分组 power 的 gold/抽取会被判错"由此消除——gold 侧不再有一票否决）。
+  2. `evals/README.md` round-2 段落不再声称 reference.md"says to omit"，改为如实陈述两种读法
+     等价、groups_ok 只是与 gold 记分比较。
+  3. `scoring.py` 未动：它是 gold 对照记分而非规则裁判，run 选另一种读法仍丢 groups_ok——
+     与既有运行逐字节不变（重跑协议），此处如实记录而非洗分。
 
 ## SCH-007 整数引脚号被 load 层强制转字符串，MUST 无检查器
 - 现象：reference.md:31 与 SCH-007（MUST）要求 pin number 是字符串，但 src/kicad_partspec/spec/load.py:86-91

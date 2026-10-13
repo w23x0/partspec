@@ -339,11 +339,13 @@ def test_PIN_004_a_printed_supply_block_is_grouped_power():
 
 
 def test_PIN_004_lone_supplies_may_stay_ungrouped():
-    """NE555 prints no supply block; VCC and GND are the part's only supplies and stay ungrouped."""
+    """NE555 prints no supply block; VCC and GND are the part's only supplies. reference.md says
+    grouping them `power` is optional and leaving the group off is equally correct, so both readings
+    pass; a supply that is neither ungrouped nor in power is the failure this guards."""
     for number in ("1", "8"):
         item = pin("ne555_soic8", number)
         assert item["electrical_type"] == "power_in", number
-        assert item.get("group") is None, number
+        assert item.get("group") in (None, "power"), number
 
 
 @pytest.mark.parametrize("path", GOLD, ids=[p.parent.name for p in GOLD])

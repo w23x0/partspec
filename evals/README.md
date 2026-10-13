@@ -320,9 +320,11 @@ The interesting result is the other column. In 40 of the 64 contested rows — t
 - The TCA9548A gold recorded a standoff as a `lead_thickness` — the DETAIL A `0.15 / 0.05` callout, which is the same
   standoff on PW0016A and DCU0008A.
 
-The golds that held up held up against runs that all made the same mistake: on 24LC256 and INA226 both runs invented a
-`power` group for a lone supply pin, which `reference.md` says to omit. That is four gold-right rows in the table above,
-and they are the one kind of disagreement this round scored cleanly — the runs were all wrong the same way.
+The golds that held up held up against runs that all made the same choice: on 24LC256 and INA226 both runs invented a
+`power` group for a lone supply pin. `reference.md` calls that choice optional — grouping a lone supply `power` and
+leaving the group off are equally correct — so the runs' reading was not a rule violation, only a difference from the
+gold's, which is what `groups_ok` compares against. That is four gold-right rows in the table above,
+and they are the one kind of disagreement this round scored cleanly — the runs all differed the same way.
 
 This round's golds needed correcting too, after two gold errors in round 1 and two in round 2.
 That is the argument for treating these files as a first draft: a gold corrected after the runs are seen is not
