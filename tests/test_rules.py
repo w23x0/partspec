@@ -270,7 +270,12 @@ def test_PIN_001_alt_names_are_functions_not_descriptions(path):
 
 @pytest.mark.parametrize("case", EXPOSED_PAD_GOLDS)
 def test_PIN_001_an_exposed_pad_carries_no_alt_names(case):
-    """The pad row exists in these four golds; the other EP gold (rp2040) folds its pad into a GND row."""
+    """The pad row exists in these four golds; the other EP gold (rp2040) folds its pad into a GND row.
+
+    The name is whatever the sheet's pin table prints — EP, PAD, DAP — per the 2026-10-13
+    adjudication (spec/ISSUES.md, PIN-001): "name as printed" wins over the old blanket EP, and the
+    rules registry only ever carried the no-alt_names half.
+    """
     pads = [p for p in pins_of(case) if p["name"] in ("EP", "PAD", "DAP")]
     assert len(pads) == 1, f"{case}: expected one exposed-pad row"
     assert not pads[0].get("alt_names"), f"{case}: the exposed pad has alt names"

@@ -84,7 +84,15 @@
 - 两种读法：A 一律 EP（正文当前写法）；B 按印出的主功能命名（reference.md:35），pad 随数据表用词。
 - 证据：reference.md:35-37、rules.json PIN-001 声明、上列 gold 行号、tests/test_rules.py:36 与 212-217。
 - 建议：人类裁定后，正文/登记表/测试三处同步；gold 是否改动取决于裁定。
-- 状态：open（来源：round 1 独立审计，证据行号已复核）
+- 状态：settled（读法 B，2026-10-13 主会话执行，用户已授权自行推动）：reference.md 的
+  "an exposed pad is named `EP`" 一句改为"无 `alt_names`，名字用引脚表印出的那个词"——
+  证据是四份 gold 各自引文里的印刷词：drv8871 `PAD — — Thermal pad`、tps5430
+  `DAP — GND pin must be connected…`、cp2102n/tps62130 `EP`。读法 B 的三条依据：
+  (1) reference.md 自身第一句就是"the primary function as printed"，EP 是更具体的子句，
+  冲突时"as printed"是上位规则；(2) rules.json 的 PIN-001 声明本来只带 no-alt_names 半句；
+  (3) 测试与 gold 记分基线（names_ok 对照 gold）早已按印刷词执行，改 prose 不动任何运行记分。
+  gold 一个不改；`tests/test_rules.py::test_PIN_001_an_exposed_pad_carries_no_alt_names` 的
+  docstring 记录了本次裁定。
 
 ## PIN-004 孤立电源"可选"被语料测试与 evals/README 当成强制
 - 现象：reference.md:55-56 明确"grouping it `\"power\"` is optional and leaving `group` off it is equally

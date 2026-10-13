@@ -32,9 +32,10 @@ Pin `number` is a string (`"1"`, `"A1"`).
 
 ## Pin fields
 
-- `name`: the primary function as printed. Use the ASCII hyphen (`IN1-`, `V-`). Extra *functions* of a multi-function pin go
-  in `alt_names` (`PB0 (PCINT0/CLKO/ICP1)` is name `PB0`, alt_names `PCINT0`, `CLKO`, `ICP1`). A description is not an
-  alternate function: an exposed pad is named `EP` and gets no `alt_names`.
+`name`: the primary function as printed. Use the ASCII hyphen (`IN1-`, `V-`). Extra *functions* of a multi-function pin go
+in `alt_names` (`PB0 (PCINT0/CLKO/ICP1)` is name `PB0`, alt_names `PCINT0`, `CLKO`, `ICP1`). A description is not an
+alternate function: an exposed pad gets no `alt_names`, and its name is the word the sheet's pin table prints for it
+(`EP` on the cp2102n and tps62130 sheets, `PAD` on DRV8871's, `DAP` on the TPS5430's — never a second name beside it).
 - An `alt_names` entry is another function of the same pad **on the part you were asked for**. When one datasheet documents
   several parts, a cell that pairs your pin with a sibling part's name (`SCL/SCK`, `A2/SO`, `NC/CS` on the MCP23008 pages) is
   two parts, not two functions: take the name printed for your part, leave `alt_names` empty, and list the pairing in the
