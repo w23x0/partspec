@@ -108,13 +108,18 @@ Deliberately **not** recorded from the same area of the drawing:
 * `0.25 GAGE PLANE` — a note about where the gage plane is, not a size.
 * `0.05 MAX / 0.05 MIN ALL AROUND` on p.29 — solder-mask tolerance, not a land dimension.
 
-### 2.4 `lead_thickness` = 0.15, printed in parentheses
+### 2.4 `lead_thickness` removed — `(0.15) TYP` is a reference value (2026-10-13 `[GOLD]`)
 
-`(0.15) TYP` is a parenthesised (reference-only) value, and `reference.md` says parenthesised
-values are certainly usable for `land_*` but does not bless them elsewhere. It is recorded as
-`nom: 0.15` because the callout is unambiguous in meaning (lead thickness in the side view, arrowed
-across the foot), and a `TYP` value is a nominal by definition. It does not affect the generated
-symbol or footprint.
+`(0.15) TYP` (p.28, front view) is a parenthesised reference value: the sheet's own NOTE 1 declares
+parenthesised values reference-only. `reference.md` (parenthesised-values paragraph) and rule
+DIM-004 (MUST) say a reference value may serve a `land_*` value and must not become a package
+dimension; if that is the only thickness callout on the sheet, `lead_thickness` is left out.
+It is here the only thickness callout. The entry was therefore **deleted** from this gold; the
+old record (`nom: 0.15`, `extracted`) was knowingly against the rule and the deletion is the
+whole fix. The drawn meaning (lead thickness, arrowed across the foot) is not in dispute — only
+its eligibility as a package dimension. This matches `tca9548a_tssop24` and `uln2003a_tssop16`,
+whose parenthesised-only thickness callouts were likewise removed in the round-4 adjudication.
+No quote check changes: the removed entry is the only thing that cited `(0.15) TYP`.
 
 ### 2.5 `land_span` = 5.8, marked `inferred`
 

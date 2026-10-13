@@ -63,8 +63,15 @@ pad count or body size; only the pad-row spacing differs, decided for the datash
 3. **`lead_length` = 0.20–0.35 mm.** The `0.35 / 0.20` callout in DETAIL A is horizontal, from the body edge
    to the lead toe, i.e. the foot — not the body-to-tip length. Kept `extracted`; the arrows were unambiguous
    at 300/600 dpi. (Nexperia `Lp` / ST `L` equivalent.)
-4. **`lead_thickness` = 0.13 mm.** `(0.13) TYP` in the front view; a parenthesised reference value, recorded
-   as `nom` per the conventions.
+4. **`lead_thickness` removed — the value is reference-only (2026-10-13 `[GOLD]`).** `(0.13) TYP` in
+   the front view is a parenthesised reference value (the sheet's own note declares parentheses
+   reference). Rule DIM-004 (MUST) and `reference.md` (parenthesised-values paragraph) forbid a
+   parenthesised value from becoming a package dimension and direct that, when it is the only
+   thickness callout, `lead_thickness` be left out — which it is here. The former `nom: 0.13`
+   entry was deleted; the meaning of the callout is not in dispute, only its eligibility. This
+   matches `tca9548a_tssop24` and `uln2003a_tssop16` (round-4 adjudication) and the sibling
+   `txs0108e_tssop20` gold (same NOTE wording). No quote check changes: it is the only entry that
+   cited `(0.13) TYP`.
 5. **`pitch` = 0.5 mm, `nom`.** A boxed basic dimension with one printed value and no tolerance.
 6. **`land_span` = 3.1 mm, `inferred`.** `(3.1)` is in parentheses (a reference value) and the extension lines
    land on the pad centrelines, so it is the centre-to-centre distance between opposite pad rows. Marked

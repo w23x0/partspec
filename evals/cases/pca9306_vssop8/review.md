@@ -46,10 +46,16 @@ of the KiCad file.
 - **`height` = 0.6–0.9** and **`standoff` = 0.0–0.1**, both in Detail A. The stacked `0.9`/`0.6` pair
   runs from the seating plane (datum C) to the top of the moulding, so `height` gets `min`/`max`
   rather than `max` only.
-- **`lead_thickness` = (0.13) TYP**, the only thickness callout on the sheet: in the front view it
-  straddles the lead at the tip, so it is the lead thickness. It is a reference value in
-  parentheses with no tolerance; marked `inferred` for that reason, and it does not affect the
-  generated files.
+- **`lead_thickness` removed — `(0.13) TYP` is a reference value (2026-10-13 `[GOLD]`).** The sheet's
+  own note declares parenthesised values reference-only, and rule DIM-004 (MUST) with
+  `reference.md` (parenthesised-values paragraph) says a reference value may serve a `land_*` value
+  but must not become a package dimension; as the only thickness callout on the sheet, it leaves
+  `lead_thickness` out. The former `nom: 0.13`, `inferred` entry was deleted. The reading of the
+  callout (front view, straddling the lead at the tip) is not in dispute — only its eligibility.
+  This reverses the round-4 adjudication line that kept the value ("value is still a stated one,
+  marked inferred"); that call is what this correction settles in favour of the rule text. It
+  matches `tca9548a_tssop24` and `uln2003a_tssop16` (round 4) and `txs0108e_tssop20`. No quote
+  check changes: it is the only entry that cited `(0.13) TYP`.
 - **`land_span` = (3.1)**, the bracketed reference dimension between the two pad-row centrelines on
   the land pattern (p.32). Marked `inferred` because the drawing does not name it.
 - **Pin types.** `EN` is `input` (printed `I`, "Switch enable input"). `VREF1`/`VREF2` are printed
@@ -79,8 +85,8 @@ of the KiCad file.
 
 ## 4. Build result
 
-`kicad-partspec validate spec.gold.json --datasheet pca9306.pdf` passes (only the 5 expected
-`status.inferred` warnings: pins 1, 2, 7; dimensions `lead_thickness` and `land_span`).
+`kicad-partspec validate spec.gold.json --datasheet pca9306.pdf` passes (only the 4 expected
+`status.inferred` warnings: pins 1, 2, 7; dimension `land_span`).
 `kicad-partspec build --out out --concise` passes with 0 failures and produces
 `PCA9306.kicad_sym` plus the footprint `VSSOP-8_2.3x2.0mm_P0.5mm.kicad_mod` (8 pads, 0.85 × 0.3,
 pitch 0.5, row centres ±1.55) built from the datasheet land pattern on p.32.

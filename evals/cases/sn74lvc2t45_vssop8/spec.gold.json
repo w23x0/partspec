@@ -82,14 +82,6 @@
         "min": 0.2,
         "max": 0.35
       },
-      "lead_thickness": {
-        "source": {
-          "page": 31,
-          "quote": "(0.13) TYP"
-        },
-        "status": "extracted",
-        "nom": 0.13
-      },
       "land_pad_length": {
         "source": {
           "page": 32,
