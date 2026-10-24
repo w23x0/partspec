@@ -394,10 +394,12 @@ def test_PIN_004_a_power_group_holds_supplies_and_nothing_else(path):
 
 
 # A supply rail by name: the canonical stems plus the prefix, suffix and pairing forms sheets print
-# (AVCC, DVDD, IOVDD, USB_VDD, VCCA, AGND, VS, VREF1, VDD/VDDA). Deliberately NOT here: context-
-# dependent names -- ina226's VBUS is a sense input on that part while cp2102n's VBUS feeds a
-# regulator, and EP/PAD/DAP/E (exposed pads) are PIN-001 territory, tested separately.
-_SUPPLY_STEMS = {"VCC", "VDD", "VSS", "GND", "VIN", "VREF", "VS", "VM", "VBAT"}
+# (AVCC, DVDD, IOVDD, USB_VDD, VCCA, AGND, VS, VDD/VDDA). Deliberately NOT here: context-dependent
+# names -- ina226's VBUS is a sense input on that part while cp2102n's VBUS feeds a regulator;
+# VREF is a high-impedance reference input on mcp3008 (`passive` per reference.md's analog-reference
+# row) but a bias rail on pca9306 (`power_in`), both readings pinned explicitly below; and
+# EP/PAD/DAP/E (exposed pads) are PIN-001 territory, tested separately.
+_SUPPLY_STEMS = {"VCC", "VDD", "VSS", "GND", "VIN", "VS", "VM", "VBAT"}
 _SUPPLY_EXACT = {"V+", "V-", "PGND", "VIO", "USB", "VREGIN"}
 _SUPPLY_PREFIXES = {"A", "D", "IO", "P", "ADC", "USB", "VREG", "PV", "DV", "AV"}
 
@@ -422,6 +424,19 @@ def test_PIN_005_supplies_are_typed_as_power(path):
     for item in data["pins"]:
         if _supply_name(item["name"]):
             assert item["electrical_type"] in SUPPLY_TYPES, f"{path.parent.name}: pin {item['number']} {item['name']}"
+
+
+def test_PIN_005_an_analog_reference_is_passive():
+    """`VREF` is context-dependent, so no name predicate can carry it. mcp3008's VREF is a
+    high-impedance reference input -- reference.md's analog-reference row types it `passive`
+    (inferred); pca9306's VREF1/VREF2 bias the pass gate and are rails -- `power_in`. Both
+    readings are pinned so neither side of the split drifts (2026-10-24, round 6)."""
+    vref = pin("mcp3008_soic16", "15")
+    assert vref["name"] == "VREF" and vref["electrical_type"] == "passive"
+    assert vref["status"] == "inferred"
+    for number in ("2", "7"):
+        v = pin("pca9306_vssop8", number)
+        assert v["name"].startswith("VREF") and v["electrical_type"] == "power_in"
 
 
 def test_PIN_005_an_open_drain_output_is_open_collector():
