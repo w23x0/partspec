@@ -144,9 +144,10 @@ dimension `inferred`.
 
 An `extracted` dimension has to be readable from its own quote: one of `min`/`nom`/`max` appears among the numbers the
 quote carries, a callout quoted in inches counting once converted (`.012-.020` supports 0.31–0.51). A quote that sits on
-the cited page but names a different callout is the wrong evidence even when the quote itself is found there. A quote
-with no numbers in it is a dimension-letter row (`HE L Lp v w y`) — the values live in the row below it — and an
-`inferred` dimension is a marked interpretation; the checker does not test either one.
+the cited page but names a different callout is the wrong evidence even when the quote itself is found there. Quote the
+row or callout the values were read from: a quote with no numbers in it — a dimension-letter row such as
+`HE L Lp v w y` — supports nothing and is reported, however real the values two rows down are. An `inferred` dimension is
+a marked interpretation; the checker does not test it.
 
 Three lead callouts are near-identical on the page and are the easiest to misread. Name each one by the two features its
 extension lines run between, not by its size, its place on the sheet or the label the drawing gives it:

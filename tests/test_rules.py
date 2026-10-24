@@ -216,9 +216,15 @@ def test_SRC_006_a_supporting_number_passes(quote, values):
     assert not failing_ids(_dim("width", dim))
 
 
-def test_SRC_006_a_numberless_quote_is_a_dimension_letter_row():
-    """74hc595's lead_length quotes the letter header `HE L Lp v w y`; the values sit in the row below it."""
+def test_SRC_006_a_numberless_quote_is_reported():
+    """A quote with no numbers supports nothing: `HE L Lp v w y` is the 74hc595 letter header whose
+    values sit in the row below it. Until 2026-10-24 the checker stood down on it; the gold that
+    relied on that carve-out is fixed, and the hole is closed."""
     dim = {"min": 0.4, "max": 1.27, "source": src(4, "HE L Lp v w y")}
+    assert "dim.quote_unsupported" in failing_ids(_dim("lead_length", dim))
+    dim["source"] = src(4, "mm nom 0.25 1.27 1.05 0.2 0.25 0.1")
+    dim["nom"] = 1.05
+    del dim["min"], dim["max"]
     assert not failing_ids(_dim("lead_length", dim))
 
 

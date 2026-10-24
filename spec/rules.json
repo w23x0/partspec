@@ -123,7 +123,7 @@
     {
       "id": "SRC-006",
       "level": "MUST",
-      "statement": "An extracted dimension quoted from a row that carries numbers has one of min/nom/max among those numbers, matched after inch-to-mm conversion; a numberless quote is a dimension-letter row and an inferred dimension is not checked.",
+      "statement": "An extracted dimension has one of min/nom/max among the numbers its quote carries, matched after inch-to-mm conversion, and the quote must carry at least one number; an inferred dimension is not checked.",
       "spec": "src/kicad_partspec/verify/spec_checks.py · check_quote_value_support"
     },
     {

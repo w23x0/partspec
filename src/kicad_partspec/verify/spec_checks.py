@@ -178,9 +178,11 @@ def check_quote_value_support(spec: PartSpec) -> list[Finding]:
     """An extracted dimension must be readable from its own quote (SRC-006).
 
     A quote may sit on the cited page and still be the wrong evidence: `SEATING PLANE`
-    with a `nom` of 1.55 supports nothing.  A numberless quote is a dimension-letter row
-    (`HE L Lp v w y`) whose values live in a separate row of the text layer, and an
-    `inferred` dimension is a human-flagged interpretation; both are left alone.
+    with a `nom` of 1.55 supports nothing.  A quote with no numbers in it supports even
+    less — until 2026-10-24 a numberless quote was treated as a dimension-letter row
+    (`HE L Lp v w y`) and left alone, which let a spec quote pure letters and record
+    anything; that hole is closed.  An `inferred` dimension is a human-flagged
+    interpretation and is still not checked.
     """
     findings: list[Finding] = []
     for name, dim in spec.package.dimensions.items():
@@ -190,20 +192,21 @@ def check_quote_value_support(spec: PartSpec) -> list[Finding]:
         if dim.source is None or not dim.source.quote.strip():
             continue  # check_provenance owns a missing or empty quote
         numbers = [float(item) for item in _QUOTE_NUMBER.findall(dim.source.quote)]
-        if not numbers:
-            continue
         values = [value for value in (dim.min, dim.nom, dim.max) if value is not None]
-        if any(_carries(value, numbers) for value in values):
+        if numbers and any(_carries(value, numbers) for value in values):
             continue
         recorded = {
             label: value for label, value in (("min", dim.min), ("nom", dim.nom), ("max", dim.max)) if value is not None
         }
+        if numbers:
+            why = "carries no number matching any of them (a callout quoted in inches counts, converted)"
+        else:
+            why = "carries no numbers at all — quote the row or callout the values were read from"
         findings.append(
             Finding(
                 "dim.quote_unsupported",
                 FAIL,
-                f"{path} records {recorded} but quote {dim.source.quote!r} carries no number matching any of them "
-                "(a callout quoted in inches counts, converted): quote the row or callout the value was read from.",
+                f"{path} records {recorded} but quote {dim.source.quote!r} {why}.",
                 path=path,
                 actual={"recorded": recorded, "quote_numbers": numbers},
             )

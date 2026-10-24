@@ -246,7 +246,13 @@
   - 残留口子（记录备查，不自行拍板）：引文完全无数字时可谎报——74hc595 `lead_length`
     的引文就是纯字母行 `HE L Lp v w y`（值在下一行）。要收掉它必须改该 gold 的引文，
     而引文校验需要数据表 PDF（本机没有），走 [GOLD] 协议需人类执行。
-- 状态：settled（规则落在 SRC-006；纯字母引文口子待 PDF 就位后另行 [GOLD] 处理）
+- 状态：settled（规则落在 SRC-006；~~纯字母引文口子待 PDF 就位后另行 [GOLD] 处理~~
+  **2026-10-24 收口，用户授权会话执行**：PDF 就位后渲染第 15 页裁决——`L` 列只有
+  nom 1.05，0.4/1.27 实为 `L_p` 列——gold `lead_length` 改 `{nom: 1.05}` + nom 行引文
+  （review.md 更正节），SRC-006 的"无数字引文不查"豁免撤销（检查器/正文/登记表/
+  测试 `test_SRC_006_a_numberless_quote_is_reported` 四处同步，该测试由"豁免"反转为
+  "上报"，属加强），round 2 重跑证据 `evals/runs/src006_goldfix_rescore.md`：
+  12/16 run 逐字节不变，74hc595 两 run 的 lead_length 翻对，usable 5/16 不变）
 
 ## PIN-005 语料测试的电源名白名单漏掉 AVDD/VBUS/VDDIO 一类
 - 现象：tests/test_rules.py:301-305 只认 11 个硬写名（VCC VDD VSS GND V+ V- VM PGND VIO VBAT USB）。

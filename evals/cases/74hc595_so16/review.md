@@ -63,8 +63,9 @@ KiCad pads (1.95 × 0.6 at ±2.475/±4.445) are consistent with the datasheet's 
    tip *across* the rows. The drawing shows H_E spanning exactly the two lead tips. `extracted`.
 4. **`body_length` = D (9.8–10.0) and `body_width` = E (3.8–4.0)** — dual-row rule: D runs
    along the pin rows (front view), E across them. `extracted`.
-5. **`lead_length` = L** — the drawing gives `L` nom 1.05 and min 0.4 with **no maximum**.
-   Recorded as `min` + `nom` (not min/max), which is what the table prints.
+5. **`lead_length` = L** — the table gives `L` **nom 1.05 only**: the max and min rows of the `L`
+   column are empty, and the 0.4 / 1.27 pair sits under `L_p` (see the 2026-10-24 correction
+   below). Recorded as `nom`.
 6. **`lead_width` = b_p (0.31–0.51)** and **`lead_thickness` = c (0.10–0.25)** — b_p is the
    lead width in the plan view, c is the lead material thickness in the side view. `extracted`.
 7. **The 3-state outputs (`Q0`–`Q7`)** — `tri_state` rather than `output`. Datasheet support is
@@ -91,7 +92,7 @@ KiCad pads (1.95 × 0.6 at ±2.475/±4.445) are consistent with the datasheet's 
   reflow|standoff` returns nothing in the whole document). Consequently the build reports
   `footprint.skipped` and only `out/74HC595D.kicad_sym` is produced. Per the skill, these
   numbers must not be taken from the package outline, and none were.
-* **`L_p` (max 1.27), `A3` (nom 0.25), `v` (0.2), `w` (0.25), `y` (0.1), `q`, `θ` (0°–8°).**
+* **`L_p` (0.4–1.27), `A3` (nom 0.25), `v` (0.2), `w` (0.25), `y` (0.1), `q`, `θ` (0°–8°).**
   These are lead-toe geometry, the lead-forming/positioning tolerances and the surface angle.
   None of them corresponds to a `reference.md` dimension name, and several (`w`, `v`, `y`) are
   positional/seating tolerances rather than sizes. Omitted rather than guessed.
@@ -99,9 +100,10 @@ KiCad pads (1.95 × 0.6 at ±2.475/±4.445) are consistent with the datasheet's 
 
 ## 4. Contradictions inside the datasheet
 
-* **The mm and inch columns of the Fig. 12 dimension table are not self-consistent for `L`.**
-  `L` is listed as nom 1.05 / min 0.4 mm but as nom 0.041 / min 0.016 in — those agree
-  (1.05 mm = 0.041 in, 0.4 mm = 0.0157 in ≈ 0.016 in), so this one is fine.
+* **The mm and inch columns of the Fig. 12 dimension table are self-consistent.** `L` nom
+  1.05 mm = 0.041 in; `L_p` 0.4–1.27 mm = 0.016–0.05 in; `A1` 0.10–0.25 mm = 0.004–0.010 in.
+  (The original review ran this check against a misread of the `L`/`L_p` columns and called the
+  table inconsistent; the rendered table below settles it.)
 * **`A1` inch row.** mm max 0.25 / min 0.10 prints as 0.010 / 0.004 in, consistent.
 * **The genuinely odd one: `A3`.** It is printed as a **nominal-only** 0.25 mm (0.01 in) in
   the middle row with **no max and no min**, whereas every other lead dimension in the table
@@ -129,6 +131,28 @@ KiCad pads (1.95 × 0.6 at ±2.475/±4.445) are consistent with the datasheet's 
   the `A3` column of the min row. The rendered image shows it under `b_p`, which is what the
   gold uses (`lead_width` 0.31–0.51). A text-only extraction would have produced a wrong
   `lead_width`.
+
+## Correction — 2026-10-24 ([GOLD], user-authorized session)
+
+**What changed:** `lead_length` `{min: 0.4, max: 1.27}` → `{nom: 1.05}`; its quote
+`HE L Lp v w y` → the nom row `mm nom 0.25 1.27 1.05 0.2 0.25 0.1` (page 15). No other entry moved.
+
+**Why:** the rendered dimension table on page 15 (300 dpi, `Fig. 12`) shows the `L` column with
+an empty max row and an empty min row — `L` carries **nom 1.05 and nothing else**. The max row's
+`1.27` and the min row's `0.4` both sit one column right, under **`L_p`** (detail X draws `L_p`
+as the flat foot span and `L` as the longer bend-to-tip span). The inch rows corroborate:
+`L` nom 0.041 in, `L_p` max 0.05 / min 0.016 in. The original entry had recorded `L_p`'s limits
+under `L`'s name — precisely the column-alignment trap §5 records for `b_p`/`A3` — and quoted
+the letter header, leaning on SRC-006's numberless-quote carve-out.
+
+**Supporting side evidence:** both round-2 runs read `nom: 1.05` for `lead_length`
+(`round2/74hc595_so16_run1.json` quotes `"1.05"`, run 2 quotes the nom row), so the correction
+moves both runs' `lead_length` from wrong to right rather than against either of them.
+
+**Downstream:** SRC-006's numberless-quote carve-out is withdrawn the same day (checker
+`check_quote_value_support` now reports a numberless quote; `reference.md`, `spec/rules.json`
+and `tests/test_rules.py::test_SRC_006_a_numberless_quote_is_reported` updated accordingly);
+round 2 is rescored in `evals/runs/src006_goldfix_rescore.md`.
 
 ## MPN (checked 2026-10-14, no change)
 
