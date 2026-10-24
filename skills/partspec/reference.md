@@ -2,11 +2,11 @@
 
 ```
 {
-  "mpn": "…",                       manufacturer part number as it should appear in KiCad
+  "mpn": "…",                       manufacturer part number as the datasheet prints it
   "manufacturer": "…",
   "datasheet": {"sha256": "…", "revision": "…", "url": "…" (optional)},
   "package": {
-    "family": "SOIC | TSSOP | QFN | VQFN | QFP | TQFP | …",
+    "family": "SOIC | TSSOP | SOT-23 | QFN | VQFN | QFP | TQFP | …",
     "pin_count": 8,                 leads/pads, not counting an exposed pad
     "exposed_pad": false,
     "dimensions": { "<name>": {"min": …, "nom": …, "max": …, "source": {"page": 1, "quote": "…"}, "status": "extracted"} }
@@ -15,6 +15,10 @@
              "source": {"page": 1, "quote": "…"}, "status": "extracted"} ]
 }
 ```
+
+`mpn` is that string copied exactly: the orderable the datasheet's addendum lists, suffix and all (`ADS1015IDGSR`), not a
+package-only form that appears on no page (`ADS1015IDGS`). Drop a tape-and-reel or temperature suffix only when the page
+prints the shorter number. If the datasheet prints no orderable, use the number it does print and say so in the hand-over.
 
 Give whichever of `min`/`nom`/`max` the datasheet prints:
 
@@ -28,11 +32,34 @@ Pin `number` is a string (`"1"`, `"A1"`).
 
 ## Pin fields
 
-- `name`: the primary function as printed. Use the ASCII hyphen (`IN1-`, `V-`). Extra *functions* of a multi-function pin go
-  in `alt_names` (`PB0 (PCINT0/CLKO/ICP1)` is name `PB0`, alt_names `PCINT0`, `CLKO`, `ICP1`). A description is not an
-  alternate function: an exposed pad is named `EP` and gets no `alt_names`.
-- `group`: only when the part has separate units, e.g. two identical amplifiers: `"A"`, `"B"`, and the supply pins `"power"`.
-  Omit it otherwise.
+`name`: the primary function as printed. Use the ASCII hyphen (`IN1-`, `V-`). Extra *functions* of a multi-function pin go
+in `alt_names` (`PB0 (PCINT0/CLKO/ICP1)` is name `PB0`, alt_names `PCINT0`, `CLKO`, `ICP1`). A description is not an
+alternate function: an exposed pad gets no `alt_names`, and its name is the word the sheet's pin table prints for it
+(`EP` on the cp2102n and tps62130 sheets, `PAD` on DRV8871's, `DAP` on the TPS5430's — never a second name beside it).
+- An `alt_names` entry is another function of the same pad **on the part you were asked for**. When one datasheet documents
+  several parts, a cell that pairs your pin with a sibling part's name (`SCL/SCK`, `A2/SO`, `NC/CS` on the MCP23008 pages) is
+  two parts, not two functions: take the name printed for your part, leave `alt_names` empty, and list the pairing in the
+  hand-over. The same goes for a name from another package's pinout column or table.
+- `group`: required whenever the datasheet shows repeated, identical functional blocks — two identical amplifiers, a
+  quad gate, N numbered channels. Every pin of every unit is grouped; leaving them ungrouped is a defect, not a safe
+  default. The key is whatever the datasheet calls the unit — its letters `"A"`, `"B"`, its channel numbers `"1"`–`"7"`,
+  its channel names `"CH0"`–`"CH7"` — never a key the datasheet does not use, and a numbered or named channel is a channel
+  even without a letter. Both pins of one unit share that one key: a unit's control pin and its output pin, the base and
+  the collector of one channel. Pins with no unit of their own — an address pin, a reset, a chip select — stay
+  ungrouped. The two sides of one part's function are different blocks, not units, so the A port and B port of a level
+  translator, the two banks of a memory, or an input port and its matching output port stay ungrouped; that clause does
+  not split the two pins of one unit.
+- The supply pins are the one exception to "identical": `"power"` marks them as supplies, not as repeated blocks. Take it
+  in addition to a unit group — never instead of it — for a supply, ground or return the datasheet calls common to all
+  units (a common emitter, a shared rail). Supplies the datasheet prints as a block of their own — a `PWR` cell in a TYPE
+  column (DRV8871's `GND 1 PWR`, `VM 5 PWR`, `PGND 7 PWR`) — are grouped `"power"` whether or not anything else on the
+  part is grouped. A lone supply or ground pin, or a bare printed VDD/VSS pair on a part with no supply block of its own,
+  is neither a unit nor a printed block: grouping it `"power"` is optional and leaving `group` off it is equally correct.
+- A node shared by every unit is not thereby a supply. ULN2003A's `COM`, the common cathode of the seven flyback diodes
+  that the datasheet says is "typically tied to the system power supply", is `passive` and ungrouped, because §8.4 of that
+  same sheet says "This device does not need a power supply" and §7.4.2 that COM may float in resistive-load drive; the
+  rail of that part is `E`, the common emitter "typically tied to ground", which takes `power` alongside the channel
+  groups. The test is whether the datasheet's own supply text names the pin, not whether every unit touches it.
 - `electrical_type` is one of KiCad's:
 
 | Datasheet says | Use |
@@ -51,6 +78,10 @@ Pin `number` is a string (`"1"`, `"A1"`).
 
   Other KiCad types exist (`open_emitter`, `free`, `unspecified`); use them only if the datasheet says so.
 
+The pin table's direction column is not the last word. Check the function table and the feature list for a high-impedance
+state: a pin the part can put in Z is `tri_state` even when its row says "output" (74HC595: Q0–Q7 are high-impedance while
+OE is HIGH), and a pin that can never do that stays `output` on the same part (Q7S, which OE does not gate).
+
 ## Status
 
 `extracted`: the pin's number and name were read from the datasheet (a pairing you verified on the rendered image counts),
@@ -68,7 +99,7 @@ Take each of these that the datasheet gives; skip the ones it does not.
 |---|---|
 | `pitch` | distance between neighbouring leads |
 | `body_length`, `body_width` | plastic body size. Dual-row: length is along the pin rows, width is across between the rows. Quad: the two sides |
-| `overall_length`, `overall_width` | lead tip to lead tip, for leaded packages (dual-row: across the rows is `overall_width`) |
+| `overall_length`, `overall_width` | lead tip to lead tip, for leaded packages (dual-row: across the rows is `overall_width`, the largest across-rows dimension on the outline; a lead centre-to-centre span is not recorded) |
 | `height` | overall height above the board (usually a max) |
 | `body_thickness` | body height without leads, when given separately |
 | `standoff` | gap between the seating plane and the body underside |
@@ -81,5 +112,72 @@ Take each of these that the datasheet gives; skip the ones it does not.
 | `land_span` | centre-to-centre distance between opposite pad rows in the land pattern |
 | `land_ep_size` | exposed pad size in the land pattern |
 
-Values in parentheses on a drawing are reference values; they are fine to use for `land_*`. If you have to interpret what a
-number is (for example which side of the drawing it measures), mark that dimension `inferred`.
+Read the rendered page before you name a callout — the numbers are all on the text layer, the names are not. Follow each
+callout's extension lines and see which way its arrow runs:
+
+- extension lines landing on the **lead tips** of both rows: tip-to-tip across the rows, so `overall_width`;
+- extension lines landing on the **moulded body** edges: the body, `body_length` along the pin rows or `body_width` across;
+- an arrow from the tip of one row to the tip of the other **along** the rows: `overall_length`. If the drawing prints no
+  such callout, leave `overall_length` out rather than naming a body dimension for it.
+
+A boxed basic dimension, or one labelled `GAGE PLANE`, is a reference plane or a datum, not a size: never record it as
+`standoff`, `lead_length`, `lead_thickness` or anything else. The value that carries the label is the barred one — a boxed
+`0.25 GAGE PLANE` offset is not a standoff — while numbers sitting in the same row of the text layer are ordinary values
+and are read normally (the seating-plane row `GAGE PLANE 0.15 0.05` on the TXS0108E sheet carries that part's 0.05–0.15
+standoff). The three lead dimensions come from DETAIL A's arrows —
+`standoff` from the body underside down to the seating plane, `lead_length` along the flat foot from the lead tip to where
+the bend starts, `lead_thickness` from the arrows straddling the lead material itself, where a `TYP` supplies `nom`.
+
+`land_pad_length`, `land_pad_width`, `land_span` and `land_ep_size` are metal, so take them from the rectangle that is the
+metal: the pad outline, the plain pad callouts, or the rectangle a note calls "METAL COVERED BY SOLDER MASK". A second
+rectangle labelled "SOLDER MASK OPENING" is the mask, not the pad (DRV8871 records `(2.95)`, not the `(2.71)`), and it is
+not recorded. When the drawing prints only the mask opening, say so in the hand-over instead of substituting it. The three
+pad dimensions are one set: record `land_pad_length`, `land_pad_width` and `land_span` together or not at all — the footprint
+is generated from all three, and a set with one or two of them is a defect, not progress. `land_ep_size` stands alone.
+
+Values in parentheses on a drawing are reference dimensions — the drawing's own notes say so. They may be used for a `land_*`
+value and must not become a package dimension: a parenthesised `(0.15) TYP` across a lead in a package outline is not a
+`lead_thickness`, and if that is the only thickness callout on the sheet, leave `lead_thickness` out rather than record it. A
+boxed `BASIC` value, such as a boxed gage-plane offset, is likewise not a package dimension: it is a basic dimension for the
+land pattern. If you have to interpret what a number is (for example which side of the drawing it measures), mark that
+dimension `inferred`.
+
+An `extracted` dimension has to be readable from its own quote: one of `min`/`nom`/`max` appears among the numbers the
+quote carries, a callout quoted in inches counting once converted (`.012-.020` supports 0.31–0.51). A quote that sits on
+the cited page but names a different callout is the wrong evidence even when the quote itself is found there. A quote
+with no numbers in it is a dimension-letter row (`HE L Lp v w y`) — the values live in the row below it — and an
+`inferred` dimension is a marked interpretation; the checker does not test either one.
+
+Three lead callouts are near-identical on the page and are the easiest to misread. Name each one by the two features its
+extension lines run between, not by its size, its place on the sheet or the label the drawing gives it:
+
+| The dimension spans | Name |
+|---|---|
+| the body underside and the seating (gage) plane | `standoff` |
+| the two edges of one lead's cross-section, in the front or side view | `lead_thickness` |
+| the lead tip and where the lead leaves the body — the start of the bend, the foot that rests on the board | `lead_length` |
+
+This holds for any vendor's outline sheet, named or lettered, and inside the DETAIL A style detail view as much as on the
+outline: the foot row is the same span the letter table below gives as Nexperia `Lp` / ST `L`.
+
+When two readings of the same callout disagree about which of these three it is, the drawing is being misread, not the name:
+re-render the page and say which two planes the dimension spans before naming it.
+
+Nexperia, NXP and ST print outline tables in letters where TI drawings print the names. The same letter can mean
+different things per vendor, so read each one off the drawing:
+
+| Letter | Name |
+|---|---|
+| `A` | `height` |
+| `A1` | `standoff` |
+| `A2` | `body_thickness` |
+| `b`, `bp` | `lead_width` |
+| `c` | `lead_thickness` |
+| `D` | `body_length` |
+| `e` | `pitch` |
+| the body `E` (Nexperia `E`, ST `E1`) | `body_width` |
+| the tip-to-tip `E` (Nexperia `HE`, ST `E`) | `overall_width` |
+| the foot: the flat part resting on the board (Nexperia `Lp`, ST `L`) | `lead_length` |
+
+The lead length from the body face to the tip (Nexperia `L`, ST `L1`, and any such callout on any vendor's drawing) is
+not our `lead_length`; leave it out. The foot, from the tip to where the bend starts, is.

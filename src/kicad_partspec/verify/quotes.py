@@ -60,6 +60,72 @@ def find_datasheet(sha256: str, directory: Path) -> Path | None:
     return None
 
 
+_DOCUMENT_NUMBER = re.compile(r"\b([A-Z]{2,}\d+[A-Z]*)\b")
+
+
+def document_number(revision: str) -> str | None:
+    """The literature number a revision string opens with (`SLOS068AB (Rev. AB, October 2024)`).
+
+    Returns None when the sheet carries no such number (the RP2040 datasheet names a build
+    date), which is also when no rebuild fallback is admissible.
+    """
+    match = _DOCUMENT_NUMBER.search(revision)
+    return match.group(1) if match else None
+
+
+def first_page(pdf: Path) -> str:
+    try:
+        result = subprocess.run(
+            ["pdftotext", "-layout", "-f", "1", "-l", "1", str(pdf), "-"],
+            stdin=subprocess.DEVNULL,
+            capture_output=True,
+            text=True,
+            timeout=120,
+            check=False,
+        )
+    except FileNotFoundError as exc:
+        raise RuntimeError("pdftotext was not found on PATH (install poppler-utils)") from exc
+    except subprocess.TimeoutExpired as exc:
+        raise RuntimeError(f"pdftotext timed out on {pdf}") from exc
+    if result.returncode != 0:
+        raise RuntimeError(f"pdftotext failed on {pdf}: {result.stderr.strip()}")
+    return result.stdout
+
+
+def find_datasheet_rebuilt(revision: str, directory: Path) -> Path | None:
+    """The same document rebuilt by the vendor: a fresh PDF, a different SHA-256.
+
+    TI re-issues a datasheet as a new file that keeps its literature number and the
+    ``REVISED <date>`` line printed on page 1 — the lm358 gold cites ``SLOS068AB (Rev. AB,
+    October 2024)`` and the current file is still exactly that revision, rebuilt. Only a
+    hash miss may reach this, and the answer means "the same document", never "the same
+    file": callers must say so wherever they used it.
+    """
+    number = document_number(revision)
+    if number is None:
+        return None
+    for candidate in sorted(directory.glob("*.pdf")):
+        try:
+            if number in first_page(candidate):
+                return candidate
+        except RuntimeError:
+            continue
+    return None
+
+
+def resolve_datasheet(sheet: dict[str, Any], directory: Path) -> tuple[Path | None, str]:
+    """(pdf, mode) for a datasheet block, mode in ``sha`` / ``rebuilt`` / ``missing``.
+
+    ``sha`` is the verified match; ``rebuilt`` is the same-revision fallback above and keeps
+    every caller honest by its name; ``missing`` is neither.
+    """
+    pdf = find_datasheet(sheet.get("sha256", ""), directory)
+    if pdf is not None:
+        return pdf, "sha"
+    pdf = find_datasheet_rebuilt(sheet.get("revision", ""), directory)
+    return (pdf, "rebuilt") if pdf is not None else (None, "missing")
+
+
 def _sources(data: dict[str, Any]) -> list[tuple[str, dict[str, Any]]]:
     found: list[tuple[str, dict[str, Any]]] = []
     for index, pin in enumerate(data.get("pins") or []):

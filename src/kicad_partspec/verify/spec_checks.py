@@ -6,6 +6,7 @@ to change.
 
 from __future__ import annotations
 
+import re
 from collections import Counter
 from collections.abc import Callable
 
@@ -158,11 +159,131 @@ def check_statuses(spec: PartSpec) -> list[Finding]:
     return findings
 
 
+_QUOTE_NUMBER = re.compile(r"\d+(?:\.\d+)?|\.\d+")
+# A drawing that prints inches quotes sizes like `.012-.020` where the spec records 0.31-0.51:
+# the conversion absorbs the rounding each way, so two per cent of the recorded value.
+_UNIT_TOLERANCE = 0.02
+_INCH_MM = 25.4
+
+
+def _carries(value: float, numbers: list[float]) -> bool:
+    """True when a quote number is the recorded value, or that number read in inches."""
+    return any(
+        abs(n - value) <= _UNIT_TOLERANCE * value or abs(n * _INCH_MM - value) <= _UNIT_TOLERANCE * value
+        for n in numbers
+    )
+
+
+def check_quote_value_support(spec: PartSpec) -> list[Finding]:
+    """An extracted dimension must be readable from its own quote (SRC-006).
+
+    A quote may sit on the cited page and still be the wrong evidence: `SEATING PLANE`
+    with a `nom` of 1.55 supports nothing.  A numberless quote is a dimension-letter row
+    (`HE L Lp v w y`) whose values live in a separate row of the text layer, and an
+    `inferred` dimension is a human-flagged interpretation; both are left alone.
+    """
+    findings: list[Finding] = []
+    for name, dim in spec.package.dimensions.items():
+        path = f"package.dimensions.{name}"
+        if dim.status != "extracted":
+            continue
+        if dim.source is None or not dim.source.quote.strip():
+            continue  # check_provenance owns a missing or empty quote
+        numbers = [float(item) for item in _QUOTE_NUMBER.findall(dim.source.quote)]
+        if not numbers:
+            continue
+        values = [value for value in (dim.min, dim.nom, dim.max) if value is not None]
+        if any(_carries(value, numbers) for value in values):
+            continue
+        recorded = {
+            label: value for label, value in (("min", dim.min), ("nom", dim.nom), ("max", dim.max)) if value is not None
+        }
+        findings.append(
+            Finding(
+                "dim.quote_unsupported",
+                FAIL,
+                f"{path} records {recorded} but quote {dim.source.quote!r} carries no number matching any of them "
+                "(a callout quoted in inches counts, converted): quote the row or callout the value was read from.",
+                path=path,
+                actual={"recorded": recorded, "quote_numbers": numbers},
+            )
+        )
+    return findings
+
+
+_PAREN_NUMBER = re.compile(r"(?<![A-Za-z0-9])\(\s*(?P<value>\d+(?:\.\d+)?)\s*\)")
+
+
+def check_reference_dimensions(spec: PartSpec) -> list[Finding]:
+    """A parenthesised value never becomes a package dimension (DIM-004).
+
+    A quote may incidentally show a reference value next to a real one — pca9306's lead_length row
+    carries `(0.13) TYP` — so the test is on what was recorded: a non-`land_*` dimension whose
+    recorded value its own quote prints in parentheses. A boxed `BASIC` value is the same rule with
+    no textual marker; the prose covers it.
+    """
+    findings: list[Finding] = []
+    for name, dim in spec.package.dimensions.items():
+        if name.startswith("land_"):
+            continue
+        if dim.source is None or not dim.source.quote.strip():
+            continue  # check_provenance owns a missing or empty quote
+        parenthesised = [float(m.group("value")) for m in _PAREN_NUMBER.finditer(dim.source.quote)]
+        if not parenthesised:
+            continue
+        recorded = {
+            label: value for label, value in (("min", dim.min), ("nom", dim.nom), ("max", dim.max)) if value is not None
+        }
+        for label, value in recorded.items():
+            if _carries(value, parenthesised):
+                findings.append(
+                    Finding(
+                        "dim.reference_value",
+                        FAIL,
+                        f"package.dimensions.{name}.{label} {value} is printed parenthesised in quote "
+                        f"{dim.source.quote!r}: a parenthesised value is a reference dimension, usable only for "
+                        "a land_* value — drop the dimension when it is the only callout for it on the sheet.",
+                        path=f"package.dimensions.{name}",
+                        actual={"recorded": recorded, "parenthesised": parenthesised},
+                    )
+                )
+    return findings
+
+
+LAND_SET = ("land_pad_length", "land_pad_width", "land_span")
+
+
+def check_land_set(spec: PartSpec) -> list[Finding]:
+    """The land pattern is a set: all three of pad length, pad width and span, or none (LAND-001).
+
+    One or two of them cannot make a footprint, and the generator refuses to guess; leaving the
+    set half-recorded is a defect, not a progress marker. `land_ep_size` stands alone.
+    """
+    present = [name for name in LAND_SET if name in spec.package.dimensions]
+    if len(present) != 3 and present:
+        missing = sorted(set(LAND_SET) - set(present))
+        return [
+            Finding(
+                "land.incomplete",
+                FAIL,
+                f"the land pattern records {', '.join(present)} but not {', '.join(missing)}: "
+                "land_pad_length, land_pad_width and land_span are recorded together or not at all "
+                "(the footprint is generated from all three) — complete the set or drop it.",
+                path="package.dimensions",
+                actual={"present": present, "missing": missing},
+            )
+        ]
+    return []
+
+
 SPEC_CHECKS: tuple[Callable[[PartSpec], list[Finding]], ...] = (
     check_provenance,
     check_pin_count,
     check_pin_numbers_unique,
     check_electrical_types,
     check_dimension_order,
+    check_quote_value_support,
+    check_reference_dimensions,
+    check_land_set,
     check_statuses,
 )

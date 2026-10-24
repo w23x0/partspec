@@ -13,7 +13,7 @@ from itertools import pairwise
 from typing import Any
 
 from kicad_partspec.findings import FAIL, WARN, Finding
-from kicad_partspec.gen.footprint import DUAL_FAMILIES, dim_value
+from kicad_partspec.gen.footprint import DUAL_FAMILIES, canonical_family, dim_value
 from kicad_partspec.sexpr import as_float, children, first_child, parse_sexpr
 from kicad_partspec.spec.model import PartSpec
 
@@ -31,10 +31,34 @@ class _Pad:
     y: float
     w: float
     h: float
+    rotation: float = 0.0
+
+    @property
+    def frame_size(self) -> tuple[float, float]:
+        """The pad size in the footprint's own frame: a whole quarter turn swaps the sides.
+
+        This is how the pad is *laid out*, and the lead axis is read from it, so a pad
+        written at 45 degrees is still a wide-along-x pad as far as its lead goes.
+        """
+        return (self.h, self.w) if round(self.rotation / 90) % 2 else (self.w, self.h)
+
+    @property
+    def extent(self) -> tuple[float, float]:
+        """The pad's bounding extent ``(width, height)`` with any rotation applied.
+
+        A pad turned by an angle that is not a multiple of 90 degrees reaches further
+        than its own sides say, so measure it on the rectangle its corners sweep out.
+        """
+        angle = self.rotation - 90 * round(self.rotation / 90)
+        if angle == 0:  # a whole number of quarter turns only swaps the sides
+            return self.frame_size
+        cos, sin = abs(math.cos(math.radians(angle))), abs(math.sin(math.radians(angle)))
+        return (self.w * cos + self.h * sin, self.w * sin + self.h * cos)
 
     @property
     def box(self) -> tuple[float, float, float, float]:
-        return (self.x - self.w / 2, self.y - self.h / 2, self.x + self.w / 2, self.y + self.h / 2)
+        w, h = self.extent
+        return (self.x - w / 2, self.y - h / 2, self.x + w / 2, self.y + h / 2)
 
 
 Point = tuple[float, float]
@@ -52,8 +76,41 @@ def _pads(fp: list[Any]) -> list[_Pad]:
         if None in (x, y, w, h) or len(node) < 2:
             continue
         assert x is not None and y is not None and w is not None and h is not None
-        pads.append(_Pad(str(node[1]), x, y, w, h))
+        pads.append(_Pad(str(node[1]), x, y, w, h, _num(at, 3) or 0.0))
     return pads
+
+
+def _lead_axis(pad: _Pad, pads: list[_Pad]) -> int:
+    """The axis the lead of ``pad`` runs along: 0 for x, 1 for y.
+
+    An SMD land is longer across the lead than along it, so the pad's long side
+    points the way its lead does.  Every pad of one edge of the ring shares that
+    direction, and they sit at the same distance from the origin along it, so
+    grouping on (axis, that coordinate) names the edges of a dual-row or quad
+    package whatever the rows' length and whichever way the footprint is turned --
+    unlike comparing against the largest coordinate, which breaks as soon as a row
+    is longer than half the row spacing.
+
+    A square land has no long side, so the pad itself cannot say.  The footprint
+    can: the pads of one edge share a coordinate, so the pad belongs to whichever
+    of the column x = its own and the row y = its own holds more pads.  Deciding
+    per pad from where it sits instead (the larger of |x| and |y|) splits one
+    edge across two lines and leaves pads from opposite edges as neighbours; it
+    only serves as a tie-break, when both groups are equally well supported.
+    """
+    w, h = pad.frame_size
+    if w != h:
+        return 0 if w > h else 1
+    column = sum(1 for other in pads if round(other.x, 3) == round(pad.x, 3))
+    row = sum(1 for other in pads if round(other.y, 3) == round(pad.y, 3))
+    if column != row:
+        return 0 if column > row else 1
+    return 0 if abs(pad.x) >= abs(pad.y) else 1
+
+
+def _radial(pad: _Pad, axis: int) -> float:
+    """Distance from the package centre out along the pad's lead."""
+    return abs(pad.x) if axis == 0 else abs(pad.y)
 
 
 def _segments(fp: list[Any], layer: str) -> list[tuple[Point, Point, float]]:
@@ -149,37 +206,36 @@ def check_footprint(spec: PartSpec, text: str) -> list[Finding]:
         )
 
     ep_number = str(spec.package.pin_count + 1) if spec.package.exposed_pad else None
-    ring = [pad for pad in pads if pad.number != ep_number]
+    # Unnumbered pads are paste windows and thermal vias subdividing the exposed pad, not pins.
+    ring = [pad for pad in pads if pad.number and pad.number != ep_number]
+    axes = [_lead_axis(pad, ring) for pad in ring]
     pitch = _dim(spec, "pitch")
 
     # --- pitch between neighbours along each edge of the pad ring
     if pitch is not None and ring:
-        half = max(max(abs(pad.x), abs(pad.y)) for pad in ring)
-        for axis in (0, 1):
-            lines: dict[float, list[float]] = {}
-            for pad in ring:
-                across, along = (pad.x, pad.y) if axis == 0 else (pad.y, pad.x)
-                # Pads on the perpendicular edge are not neighbours along this one.
-                if abs(along) < half - 1e-6:
-                    lines.setdefault(round(across, 3), []).append(along)
-            for positions in lines.values():
-                positions.sort()
-                for a, b in pairwise(positions):
-                    if abs((b - a) - pitch) > _TOL:
-                        findings.append(
-                            Finding(
-                                "footprint.pitch",
-                                FAIL,
-                                f"neighbouring pads are {b - a:.3f} mm apart but the datasheet pitch is {pitch} mm.",
-                                expected=pitch,
-                                actual=round(b - a, 4),
-                            )
+        lines: dict[tuple[int, float], list[float]] = {}
+        for pad, axis in zip(ring, axes, strict=True):
+            across, along = (pad.x, pad.y) if axis == 0 else (pad.y, pad.x)
+            # Pads led out along the other axis are on another edge, not neighbours here.
+            lines.setdefault((axis, round(across, 3)), []).append(along)
+        for positions in lines.values():
+            positions.sort()
+            for a, b in pairwise(positions):
+                if abs((b - a) - pitch) > _TOL:
+                    findings.append(
+                        Finding(
+                            "footprint.pitch",
+                            FAIL,
+                            f"neighbouring pads are {b - a:.3f} mm apart but the datasheet pitch is {pitch} mm.",
+                            expected=pitch,
+                            actual=round(b - a, 4),
                         )
+                    )
 
     # --- pad geometry against the datasheet land pattern
     length, width, span = _dim(spec, "land_pad_length"), _dim(spec, "land_pad_width"), _dim(spec, "land_span")
     if length is not None and width is not None and span is not None:
-        for pad in ring:
+        for pad, axis in zip(ring, axes, strict=True):
             sizes = sorted((pad.w, pad.h))
             if abs(sizes[0] - min(length, width)) > _TOL or abs(sizes[1] - max(length, width)) > _TOL:
                 findings.append(
@@ -192,16 +248,19 @@ def check_footprint(spec: PartSpec, text: str) -> list[Finding]:
                         actual=[pad.w, pad.h],
                     )
                 )
-            if abs(max(abs(pad.x), abs(pad.y)) - span / 2) > _TOL:
+            # The span is measured between opposite rows, i.e. along the leads.
+            radial = _radial(pad, axis)
+            if abs(radial - span / 2) > _TOL:
+                where = "x" if axis == 0 else "y"
                 findings.append(
                     Finding(
                         "footprint.land_mismatch",
                         FAIL,
-                        f"pad {pad.number!r} centre is {max(abs(pad.x), abs(pad.y)) * 2:.3f} mm across, "
+                        f"pad {pad.number!r} centre is {radial * 2:.3f} mm out on {where}, "
                         f"but the datasheet land span is {span} mm.",
                         path=f"pad {pad.number}",
                         expected=span,
-                        actual=round(max(abs(pad.x), abs(pad.y)) * 2, 4),
+                        actual=round(radial * 2, 4),
                     )
                 )
     ep_size = _dim(spec, "land_ep_size")
@@ -222,7 +281,7 @@ def check_footprint(spec: PartSpec, text: str) -> list[Finding]:
                 )
 
     # --- do the pads reach the leads? (nominal package dimensions)
-    findings += _lead_coverage(spec, ring)
+    findings += _lead_coverage(spec, ring, axes)
 
     # --- pads must not touch each other
     for index, first in enumerate(pads):
@@ -255,12 +314,12 @@ def check_footprint(spec: PartSpec, text: str) -> list[Finding]:
     return findings
 
 
-def _lead_coverage(spec: PartSpec, ring: list[_Pad]) -> list[Finding]:
+def _lead_coverage(spec: PartSpec, ring: list[_Pad], axes: list[int]) -> list[Finding]:
     """Compare pad edges with the nominal lead tip, heel and width from the package drawing."""
     if not ring:
         return []
     lead_length, lead_width = _dim(spec, "lead_length"), _dim(spec, "lead_width")
-    if spec.package.family.upper() in DUAL_FAMILIES:
+    if canonical_family(spec.package.family) in DUAL_FAMILIES:
         reach = _dim(spec, "overall_width") or _dim(spec, "body_width")
     else:
         reach = _dim(spec, "overall_length") or _dim(spec, "body_length")
@@ -270,9 +329,9 @@ def _lead_coverage(spec: PartSpec, ring: list[_Pad]) -> list[Finding]:
     heel = tip - lead_length
     findings: list[Finding] = []
     reported: set[str] = set()
-    for pad in ring:
-        radial, along = (abs(pad.x), pad.w) if abs(pad.x) >= abs(pad.y) else (abs(pad.y), pad.h)
-        across = pad.h if abs(pad.x) >= abs(pad.y) else pad.w
+    for pad, axis in zip(ring, axes, strict=True):
+        along, across = pad.frame_size if axis == 0 else pad.frame_size[::-1]
+        radial = _radial(pad, axis)
         outer, inner = radial + along / 2, radial - along / 2
         checks = (
             ("toe", outer - tip, "the pad stops short of the lead tip"),

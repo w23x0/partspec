@@ -90,7 +90,7 @@ def test_groups_become_units_with_power_last():
     spec = _spec("lm358_soic8")
     assert unit_groups(spec.pins) == ["A", "B", "power"]
     symbol = children(parse_sexpr(render_library(spec))[0], "symbol")[0]
-    assert [unit[1] for unit in _units(symbol)] == ["LM358_1_1", "LM358_2_1", "LM358_3_1"]
+    assert [unit[1] for unit in _units(symbol)] == ["LM358DR_1_1", "LM358DR_2_1", "LM358DR_3_1"]
     assert {first_child(p, "number")[1] for p in children(_units(symbol)[2], "pin")} == {"4", "8"}
 
 
@@ -218,7 +218,7 @@ def test_planted_error_is_detected(case, mutate, expected):
 
 def test_wrong_symbol_name_and_unparseable_text():
     spec = _spec("lm358_soic8")
-    assert "symbol.name_mismatch" in _ids(check_symbol(spec, render_library(spec).replace('"LM358"', '"OTHER"', 1)))
+    assert "symbol.name_mismatch" in _ids(check_symbol(spec, render_library(spec).replace('"LM358DR"', '"OTHER"', 1)))
     assert "symbol.unparseable" in _ids(check_symbol(spec, "(kicad_symbol_lib (symbol"))
     assert "symbol.not_a_library" in _ids(check_symbol(spec, "(something)"))
 
@@ -254,6 +254,26 @@ ORACLE = {
     "lm358_soic8": ("Amplifier_Operational.kicad_sym", "LM358"),
     "tps62130_vqfn16": ("Regulator_Switching.kicad_sym", "TPS62130"),
     "atmega328p_tqfp32": ("MCU_Microchip_ATmega.kicad_sym", "ATmega328P-A"),
+    "ina219_soic8": ("Sensor_Energy.kicad_sym", "INA219AxD"),
+    "txs0108e_tssop20": ("Logic_LevelTranslator.kicad_sym", "TXS0108EPW"),
+    "ads1115_vssop10": ("Analog_ADC.kicad_sym", "ADS1115IDGS"),
+    "tps54202_sot23": ("Regulator_Switching.kicad_sym", "TPS54202DDC"),
+    "rp2040_qfn56": ("MCU_RaspberryPi.kicad_sym", "RP2040"),
+    "74hc595_so16": ("74xx.kicad_sym", "74HC595"),
+    "stm32g030_tssop20": ("MCU_ST_STM32G0.kicad_sym", "STM32G030F6Px"),
+    "cp2102n_qfn24": ("Interface_USB.kicad_sym", "CP2102N-Axx-xQFN24"),
+    "ads1015_vssop10": ("Analog_ADC.kicad_sym", "ADS1015IDGS"),
+    "drv8871_soic8": ("Driver_Motor.kicad_sym", "DRV8871DDA"),
+    "mcp23008_soic18": ("Interface_Expansion.kicad_sym", "MCP23008-xSO"),
+    "sn74lvc2t45_vssop8": ("Logic_LevelTranslator.kicad_sym", "SN74LVC2T45DCUR"),
+    "tlc555_soic8": ("Timer.kicad_sym", "TLC555xD"),
+    "tca9548a_tssop24": ("Interface_Expansion.kicad_sym", "TCA9548APWR"),
+    "ne555_soic8": ("Timer.kicad_sym", "NE555D"),
+    "tps5430_soic8": ("Regulator_Switching.kicad_sym", "TPS5430DDA"),
+    "uln2003a_tssop16": ("Transistor_Array.kicad_sym", "ULN2003A"),
+    "24lc256_soic8": ("Memory_EEPROM.kicad_sym", "24LC256"),
+    "ina226_vssop10": ("Sensor_Energy.kicad_sym", "INA226"),
+    "pca9306_vssop8": ("Interface.kicad_sym", "PCA9306"),
 }
 
 
@@ -284,19 +304,91 @@ def _official_pins(lib, name):
 
 
 def _name_compatible(gold_name, official_name):
-    """KiCad's libraries use conventions such as +/-/~ for op-amps and merged names like XTAL1/PB6."""
+    """KiCad's libraries use conventions such as +/-/~ for op-amps, merged names like XTAL1/PB6 and an overbar where
+    datasheets write an active-low suffix (RSTb, QSPI_SS_N); ST datasheets print PC15-OSC32_OUT and VDD/VDDA where
+    KiCad has PC15 and VDD."""
     tokens = [t for t in official_name.replace("~{", "").replace("}", "").split("/") if t]
-    return gold_name == "EP" or any(t in {"+", "-", "~"} or gold_name.endswith(t) for t in tokens)
+    active_low = gold_name.removesuffix("_N").removesuffix("b") if official_name.startswith("~{") else gold_name
+    first = gold_name.replace("/", "-").split("-")[0]
+    return gold_name == "EP" or any(
+        t in {"+", "-", "~"} or gold_name.endswith(t) or active_low == t or first == t for t in tokens
+    )
+
+
+# Parts whose datasheet and KiCad name pins by different vendors' conventions; see the case's review.md.
+RENAMED = {
+    "24lc256_soic8": {  # Microchip calls the ground pin VSS and never writes GND; KiCad normalises supply rails to GND
+        "4": "GND",
+    },
+    "74hc595_so16": {  # Nexperia Q0-Q7/DS/SHCP/STCP/MR against TI's QA-QH/SER/SRCLK/RCLK/SRCLR
+        "1": "QB",
+        "2": "QC",
+        "3": "QD",
+        "4": "QE",
+        "5": "QF",
+        "6": "QG",
+        "7": "QH",
+        "9": "QH'",
+        "10": "~{SRCLR}",
+        "11": "SRCLK",
+        "12": "RCLK",
+        "14": "SER",
+        "15": "QA",
+    },
+    "drv8871_soic8": {  # TI prints PGND (7) and PAD (9); the library calls both GND
+        "7": "GND",
+        "9": "GND",
+    },
+    "tlc555_soic8": {  # TI prints RESET (4) and VDD (8) against the NE555 family's ~{RST} and VCC
+        "4": "~{RST}",
+        "8": "VCC",
+    },
+    "ina226_vssop10": {  # TI prints VBUS and IN-/IN+ on the pin table; KiCad writes Vbus and uses the shunt-terminal form Vin-/Vin+
+        "8": "Vbus",
+        "9": "Vin-",
+        "10": "Vin+",
+    },
+    "ne555_soic8": {  # TI prints RESET on pin 4; KiCad writes the active-low abbreviation
+        "4": "~{RST}",
+    },
+    "tps5430_soic8": {  # TI prints ENA and DAP; KiCad abbreviates to EN and calls the thermal pad GNDPAD
+        "5": "EN",
+        "9": "GNDPAD",
+    },
+    "uln2003a_tssop16": {  # TI labels channels 1B-7B/1C-7C and the common emitter E; KiCad uses I1-I7/O1-O7 and GND
+        "1": "I1",
+        "2": "I2",
+        "3": "I3",
+        "4": "I4",
+        "5": "I5",
+        "6": "I6",
+        "7": "I7",
+        "8": "GND",
+        "10": "O7",
+        "11": "O6",
+        "12": "O5",
+        "13": "O4",
+        "14": "O3",
+        "15": "O2",
+        "16": "O1",
+    },
+}
 
 
 @pytest.mark.skipif(not OFFICIAL.is_dir(), reason="KiCad symbol libraries not installed")
 @pytest.mark.parametrize("case", NAMES)
 def test_pin_numbers_and_names_agree_with_the_official_kicad_symbol(case):
+    if case not in ORACLE:
+        pytest.skip(f"no official KiCad symbol recorded for {case}")
     lib, name = ORACLE[case]
     official = _official_pins(lib, name)
     spec = _spec(case)
     assert {pin.number for pin in spec.pins} == set(official)
+    renamed = RENAMED.get(case, {})
     for pin in spec.pins:
+        if pin.number in renamed:
+            assert official[pin.number][0] == renamed[pin.number], (pin.number, official[pin.number])
+            continue
         assert _name_compatible(pin.name, official[pin.number][0]), (pin.number, pin.name, official[pin.number])
 
 
@@ -315,7 +407,7 @@ def test_cli_build_writes_a_verified_library(tmp_path, capsys):
     report = json.loads(capsys.readouterr().out)
     assert report["passed"] is True
     written = Path(report["files"][0])
-    assert written.name == "LM358.kicad_sym" and written.read_text(encoding="utf-8").startswith("(kicad_symbol_lib")
+    assert written.name == "LM358DR.kicad_sym" and written.read_text(encoding="utf-8").startswith("(kicad_symbol_lib")
 
 
 def test_cli_build_refuses_a_spec_that_fails_validation(tmp_path, capsys):

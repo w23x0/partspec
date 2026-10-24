@@ -1,20 +1,45 @@
-"""Spec-layer checks, exercised by planting one error at a time.
+"""Spec-layer checker properties, exercised on one synthetic document.
 
 The base document below is SYNTHETIC (an invented 4-pin part) and exists only to
-test the checkers; real datasheet-derived cases live in ``evals/cases``.
+test the checkers; real datasheet-derived cases live in ``evals/cases``. The
+planted-error table that used to live here moved to ``tests/test_rules.py``,
+where every planted case is named after the rule (SCH-*) it defends, so the
+audit in ``scripts/audit.py`` can attribute failures per rule.
 """
 
 import copy
 import json
+import os
+from pathlib import Path
 
 import pytest
 
 from kicad_partspec.cli import main
-from kicad_partspec.findings import FAIL, WARN, failed
 from kicad_partspec.verify import verify_spec
+from kicad_partspec.verify.quotes import (
+    check_quotes,
+    document_number,
+    first_page,
+    page_texts,
+    resolve_datasheet,
+    sha256_of,
+)
+
+DATASHEETS = os.environ.get("PARTSPEC_DATASHEETS")
+CASES = Path(__file__).resolve().parent.parent / "evals" / "cases"
 
 
-def _src(page=1, quote="Table 1"):
+def gold_datasheet(case):
+    return json.loads((CASES / case / "spec.gold.json").read_text(encoding="utf-8"))["datasheet"]
+
+
+def check_quotes_gold(case, datasheets):
+    data = json.loads((CASES / case / "spec.gold.json").read_text(encoding="utf-8"))
+    pdf, _ = resolve_datasheet(data["datasheet"], datasheets)
+    return check_quotes(data, page_texts(pdf))
+
+
+def src(page=1, quote="Table 1"):
     return {"page": page, "quote": quote}
 
 
@@ -26,89 +51,35 @@ BASE = {
         "family": "SOT",
         "pin_count": 4,
         "exposed_pad": False,
-        "dimensions": {"pitch": {"min": 0.9, "nom": 0.95, "max": 1.0, "source": _src(2, "e 0.95")}},
+        "dimensions": {"pitch": {"min": 0.9, "nom": 0.95, "max": 1.0, "source": src(2, "e 0.95")}},
     },
     "pins": [
-        {"number": "1", "name": "VIN", "electrical_type": "power_in", "source": _src()},
-        {"number": "2", "name": "GND", "electrical_type": "power_in", "source": _src()},
-        {"number": "3", "name": "EN", "electrical_type": "input", "source": _src()},
-        {"number": "4", "name": "VOUT", "electrical_type": "power_out", "source": _src()},
+        {"number": "1", "name": "VIN", "electrical_type": "power_in", "source": src()},
+        {"number": "2", "name": "GND", "electrical_type": "power_in", "source": src()},
+        {"number": "3", "name": "EN", "electrical_type": "input", "source": src()},
+        {"number": "4", "name": "VOUT", "electrical_type": "power_out", "source": src()},
     ],
 }
 
 
-def _mutated(mutate):
+def mutated(mutate):
     data = copy.deepcopy(BASE)
     mutate(data)
     return data
 
 
-def _ids(data, status=FAIL):
+def failing_ids(data, status="fail"):
     return {item.id for item in verify_spec(data) if item.status == status}
 
 
-def test_valid_base_has_no_failures():
-    assert not failed(verify_spec(BASE))
-
-
-# (name, mutation, expected finding id)
-PLANTED = [
-    ("missing source", lambda d: d["pins"][0].pop("source"), "prov.missing"),
-    ("empty quote", lambda d: d["pins"][1]["source"].update(quote=" "), "prov.missing"),
-    ("page zero", lambda d: d["pins"][2]["source"].update(page=0), "prov.missing"),
-    ("dimension without source", lambda d: d["package"]["dimensions"]["pitch"].pop("source"), "prov.missing"),
-    ("pin dropped", lambda d: d["pins"].pop(), "pins.count_mismatch"),
-    ("pin added", lambda d: d["pins"].append({**d["pins"][0], "number": "5"}), "pins.count_mismatch"),
-    ("duplicate number", lambda d: d["pins"][1].update(number="1"), "pins.duplicate_number"),
-    ("bad type", lambda d: d["pins"][0].update(electrical_type="power"), "pins.bad_type"),
-    ("min above max", lambda d: d["package"]["dimensions"]["pitch"].update(min=1.2), "dim.order"),
-    ("negative dimension", lambda d: d["package"]["dimensions"]["pitch"].update(min=-0.1), "dim.non_positive"),
-    (
-        "zero maximum",
-        lambda d: d["package"]["dimensions"]["pitch"].update(min=0.0, nom=0.0, max=0.0),
-        "dim.non_positive",
-    ),
-    ("empty dimension", lambda d: d["package"]["dimensions"].update(pitch={"source": _src()}), "dim.empty"),
-    ("bad status", lambda d: d["pins"][0].update(status="guessed"), "status.invalid"),
-    ("pin_count not int", lambda d: d["package"].update(pin_count="4"), "schema.invalid"),
-    ("pins not a list", lambda d: d.update(pins="none"), "schema.invalid"),
-    ("mpn missing", lambda d: d.pop("mpn"), "schema.invalid"),
-    ("page not int", lambda d: d["pins"][0]["source"].update(page="3"), "schema.invalid"),
-]
-
-
-@pytest.mark.parametrize(("mutate", "expected"), [(m, e) for _, m, e in PLANTED], ids=[n for n, _, _ in PLANTED])
-def test_planted_error_is_detected(mutate, expected):
-    assert expected in _ids(_mutated(mutate))
-
-
-def test_zero_minimum_is_allowed():
-    data = _mutated(lambda d: d["package"]["dimensions"]["pitch"].update(min=0.0, nom=0.5, max=1.0))
-    assert not failed(verify_spec(data))
-
-
-def test_exposed_pad_adds_one_expected_pin():
-    data = _mutated(lambda d: d["package"].update(exposed_pad=True))
-    assert "pins.count_mismatch" in _ids(data)
-    data["pins"].append({"number": "EP", "name": "GND", "electrical_type": "power_in", "source": _src()})
-    assert not failed(verify_spec(data))
-
-
-def test_inferred_value_is_a_warning_not_a_failure():
-    data = _mutated(lambda d: d["pins"][0].update(status="inferred"))
-    findings = verify_spec(data)
-    assert not failed(findings)
-    assert "status.inferred" in {item.id for item in findings if item.status == WARN}
-
-
 def test_all_structural_errors_reported_in_one_pass():
-    data = _mutated(lambda d: (d.pop("mpn"), d["package"].update(pin_count=0), d["pins"][0].pop("name")))
+    data = mutated(lambda d: (d.pop("mpn"), d["package"].update(pin_count=0), d["pins"][0].pop("name")))
     paths = {item.path for item in verify_spec(data) if item.id == "schema.invalid"}
     assert {".mpn", "package.pin_count", "pins[0].name"} <= paths
 
 
 def test_findings_carry_actionable_messages():
-    for item in verify_spec(_mutated(lambda d: d["pins"].pop())):
+    for item in verify_spec(mutated(lambda d: d["pins"].pop())):
         assert item.message and item.path
 
 
@@ -119,7 +90,7 @@ def test_cli_exit_codes(tmp_path, capsys):
     assert json.loads(capsys.readouterr().out)["passed"] is True
 
     bad = tmp_path / "bad.json"
-    bad.write_text(json.dumps(_mutated(lambda d: d["pins"].pop())))
+    bad.write_text(json.dumps(mutated(lambda d: d["pins"].pop())))
     assert main(["validate", str(bad)]) == 1
     assert json.loads(capsys.readouterr().out)["passed"] is False
 
@@ -127,3 +98,35 @@ def test_cli_exit_codes(tmp_path, capsys):
     broken.write_text("{not json")
     assert main(["validate", str(broken)]) == 2
     assert main(["validate", str(tmp_path / "missing.json")]) == 2
+
+
+# --- datasheet resolution: hash first, same-revision rebuild as a named fallback ---------------------
+
+
+@pytest.mark.parametrize(
+    "revision, expected",
+    [
+        ("SLOS068AB (Rev. AB, October 2024)", "SLOS068AB"),
+        ("DS20001203U (Revision U, 11/2013)", "DS20001203U"),
+        ("SLVSAG7F (Rev. F, November 2021); RGT0016C drawing dated 07/2025", "SLVSAG7F"),
+        # no literature number: the RP2040 sheet names a build, Nexperia's a date
+        ("build-date 2025-02-20, build-version 3184e62-clean (no revision letter printed)", None),
+        ("Rev. 12 — 20 March 2024", None),
+    ],
+)
+def test_document_number_reads_the_literature_number(revision, expected):
+    assert document_number(revision) == expected
+
+
+@pytest.mark.skipif(not DATASHEETS, reason="PARTSPEC_DATASHEETS is not set; the PDFs live outside the repo")
+def test_a_same_revision_rebuild_resolves_by_its_document_number():
+    """The lm358 gold cites bytes no Wayback snapshot holds; the vendor re-issued the same
+    revision as a new file, and the fallback must name that, not pretend the hash matched."""
+    directory = Path(DATASHEETS)
+    sheet = gold_datasheet("lm358_soic8")
+    pdf, mode = resolve_datasheet(sheet, directory)
+    assert mode == "rebuilt"
+    assert pdf is not None
+    assert sha256_of(pdf) != sheet["sha256"]
+    assert "SLOS068AB" in first_page(pdf)
+    assert not check_quotes_gold("lm358_soic8", directory)

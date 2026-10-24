@@ -7,6 +7,7 @@ the matching finding, so a check that never fires would fail here.
 import copy
 import json
 import shutil
+from dataclasses import replace
 from pathlib import Path
 
 import pytest
@@ -50,11 +51,15 @@ def _ids(findings, status=FAIL):
     return {item.id for item in findings if item.status == status}
 
 
-def _edit(case, mutate):
-    spec = _spec(case)
+def _edit_spec(spec, mutate):
     tree = parse_sexpr(render_footprint(spec))
     mutate(tree[0])
-    return spec, write_sexpr(tree[0])
+    return write_sexpr(tree[0])
+
+
+def _edit(case, mutate):
+    spec = _spec(case)
+    return spec, _edit_spec(spec, mutate)
 
 
 def _pad(fp, number):
@@ -288,6 +293,106 @@ def test_a_tight_pad_gap_is_a_warning_not_a_failure():
     assert "footprint.pad_overlap" not in _ids(findings)
 
 
+# --------------------------------------------------------------------------- long dual rows
+
+
+# A TI TXS0108E in the PW package: TSSOP-20, pitch 0.65, land span 5.8.  Its rows
+# (2 x 10 pads at 0.65) are longer than half the 5.8 mm span, so the pads at the far
+# ends of a row sit further out than the row spacing itself.
+TSSOP20 = {
+    "family": "TSSOP",
+    "pin_count": 20,
+    "dimensions": {
+        "pitch": {"nom": 0.65},
+        "overall_width": {"min": 6.0, "max": 6.2},
+        "body_length": {"min": 6.4, "max": 6.5},
+        "body_width": {"min": 4.3, "max": 4.4},
+        "lead_width": {"min": 0.22, "max": 0.3},
+        "lead_length": {"min": 0.5, "max": 0.7},
+        "land_pad_length": {"nom": 1.5},
+        "land_pad_width": {"nom": 0.4},
+        "land_span": {"nom": 5.8},
+    },
+}
+
+
+def _tssop20(pitch=None):
+    """A TSSOP-20 PartSpec in the PW land pattern, optionally with a wrong pitch."""
+
+    def mutate(data):
+        data["package"] = copy.deepcopy(TSSOP20)
+        data["package"]["dimensions"]["pitch"]["nom"] = pitch or 0.65
+        data["pins"] = [{"number": str(n), "name": f"P{n}", "electrical_type": "bidirectional"} for n in range(1, 21)]
+
+    return _spec("lm358_soic8", mutate)
+
+
+def _turn_round(fp):
+    """Swap the footprint's axes: the same package laid out the other way round."""
+    for pad in children(fp, "pad"):
+        at = first_child(pad, "at")
+        at[1], at[2] = float(at[2]), float(at[1])
+        size = first_child(pad, "size")
+        size[1], size[2] = size[2], size[1]
+
+
+def _rotate_pads(degrees):
+    """Rotate every pad, the way a third-party library may have written it."""
+
+    def mutate(fp):
+        for pad in children(fp, "pad"):
+            size = first_child(pad, "size")
+            if (degrees // 90) % 2:  # a quarter turn swaps the pad's own width and height
+                size[1], size[2] = size[2], size[1]
+            first_child(pad, "at").append(degrees)
+
+    return mutate
+
+
+def test_a_dual_row_package_with_long_rows_passes_every_artifact_check():
+    spec = _tssop20()
+    assert skip_reason(spec) is None
+    assert check_footprint(spec, render_footprint(spec)) == []
+
+
+def test_the_pitch_check_survives_the_package_being_turned_round():
+    spec = _tssop20()
+    findings = check_footprint(spec, _edit_spec(spec, _turn_round))
+    assert "footprint.pitch" not in _ids(findings)
+
+
+@pytest.mark.parametrize("degrees", [90, 180, 270, -90])
+def test_the_pitch_check_reads_the_leads_through_a_pad_rotation(degrees):
+    spec = _tssop20()
+    assert check_footprint(spec, _edit_spec(spec, _rotate_pads(degrees))) == []
+
+
+def test_the_pitch_check_reads_the_leads_through_a_pad_turned_by_an_odd_angle():
+    # a 45 degree turn changes a pad's outline, not the way its lead runs
+    spec = _tssop20()
+    findings = check_footprint(spec, _edit_spec(spec, _rotate_pads(45)))
+    assert "footprint.pitch" not in _ids(findings)
+
+
+def test_a_long_dual_row_still_catches_a_misplaced_pad():
+    spec = _tssop20()
+    findings = check_footprint(spec, _edit_spec(spec, _move("2", dy=0.2)))
+    assert "footprint.pitch" in _ids(findings)
+
+
+def test_a_long_dual_row_still_catches_a_wrong_datasheet_pitch():
+    footprint = render_footprint(_tssop20())  # laid out at the real 0.65 mm pitch
+    findings = check_footprint(_tssop20(pitch=0.5), footprint)  # but the datasheet says 0.5
+    assert "footprint.pitch" in _ids(findings)
+
+
+def test_a_quad_package_passes_and_still_catches_a_misplaced_pad():
+    spec = _spec("tps62130_vqfn16")
+    assert check_footprint(spec, render_footprint(spec)) == []
+    findings = check_footprint(spec, _edit_spec(spec, _move("5", dx=0.2)))  # a pad along the bottom row
+    assert "footprint.pitch" in _ids(findings)
+
+
 def test_unparseable_and_wrong_root_are_reported():
     spec = _spec("lm358_soic8")
     assert "footprint.unparseable" in _ids(check_footprint(spec, "(footprint (pad"))
@@ -360,6 +465,217 @@ def test_layout_agrees_with_the_official_kicad_footprint(case):
         assert abs(ours["17"][2] - theirs["17"][2]) <= 0.05
 
 
+# --------------------------------------------------------------------------- square lands
+
+
+# A square land has no long side to say which way its lead runs, so the edge it
+# belongs to has to come from the footprint: the pads of one edge share a coordinate.
+# Deciding it per pad, from where the pad sits, splits one row across two lines and
+# compares pads from opposite edges with each other.
+def _square_lands(case="stm32g030_tssop20"):
+    """A spec whose land pattern is square -- a datasheet may well print "0.40 0.40"."""
+
+    def mutate(data):
+        dims = data["package"]["dimensions"]
+        for key in ("land_pad_length", "land_pad_width"):
+            dims[key] = {"nom": 0.4, "status": "inferred", "source": {"page": 86, "quote": "0.40 0.40"}}
+
+    return _spec(case, mutate)
+
+
+def test_a_dual_row_package_with_square_lands_passes_its_own_generated_footprint():
+    # the rows run further out than the land span, so |y| beats |x| at the row ends
+    spec = _square_lands()
+    assert skip_reason(spec) is None
+    findings = check_footprint(spec, render_footprint(spec))
+    assert "footprint.pitch" not in _ids(findings), [f.message for f in findings if f.id == "footprint.pitch"]
+
+
+def test_a_dual_row_with_square_lands_still_catches_a_misplaced_pad():
+    findings = check_footprint(_square_lands(), _edit_spec(_square_lands(), _move("2", dy=0.2)))
+    assert "footprint.pitch" in _ids(findings)
+
+
+def _spec_for(family, numbers, **dims):
+    """A minimal PartSpec: the pins the footprint has, and only the dimensions given."""
+
+    def mutate(data):
+        data["package"] = {
+            "family": family,
+            "pin_count": len(numbers),
+            "dimensions": {name: {"nom": value} for name, value in dims.items()},
+        }
+        data["pins"] = [{"number": number, "name": number, "electrical_type": "passive"} for number in numbers]
+
+    return _spec("lm358_soic8", mutate)
+
+
+def test_a_square_land_grid_is_not_read_as_a_pitch_error():
+    """A WLCSP: 12 square 0.2 mm lands on a 4 x 4 grid, 0.5 mm pitch (in the file's own name)."""
+    official = OFFICIAL / "Package_CSP.pretty" / "Macronix_WLCSP-12_2.02x2.09mm_Layout4x4_P0.5mm.kicad_mod"
+    if not official.is_file():
+        pytest.skip("KiCad footprint libraries not installed")
+    text = official.read_text(encoding="utf-8")
+    numbers = [str(node[1]) for node in children(parse_sexpr(text)[0], "pad") if node[1]]
+    assert sorted({round(float(first_child(node, "at")[1]), 3) for node in children(parse_sexpr(text)[0], "pad")}) == [
+        -0.75,
+        -0.25,
+        0.25,
+        0.75,
+    ]  # the whole grid is on a 0.5 mm pitch, as the file's name says
+    findings = check_footprint(_spec_for("QFN", numbers, pitch=0.5), text)
+    assert "footprint.pitch" not in _ids(findings), [f.message for f in findings if f.id == "footprint.pitch"]
+
+
+def test_unnumbered_paste_windows_are_not_part_of_the_signal_ring():
+    """The pull-back thermal vias of a TQFN are unnumbered pads, not pins."""
+    official = (
+        OFFICIAL / "Package_DFN_QFN.pretty" / "TQFN-24-1EP_4x4mm_P0.5mm_EP2.8x2.8mm_PullBack_ThermalVias.kicad_mod"
+    )
+    if not official.is_file():
+        pytest.skip("KiCad footprint libraries not installed")
+    text = official.read_text(encoding="utf-8")
+    assert [n for n in _pads_of(text) if n == ""] == []  # _pads_of drops them, the ring must too
+    spec = _spec_for(
+        "QFN",
+        [str(n) for n in range(1, 25)],
+        pitch=0.5,
+        land_pad_length=0.4,
+        land_pad_width=0.4,
+        land_span=3.6,
+        land_ep_size=2.2,
+    )
+    spec = replace(spec, package=replace(spec.package, exposed_pad=True))
+    findings = check_footprint(spec, text)
+    assert "footprint.pitch" not in _ids(findings), [f.message for f in findings if f.id == "footprint.pitch"]
+
+
+def _one_pad(rotation, half):
+    """One 1 x 1 mm pad, turned by `rotation`, inside a courtyard `half` mm from the origin."""
+    corners = [(-half, -half), (half, -half), (half, half), (-half, half)]
+    return (
+        '(footprint "OnePad"\n  (layer "F.Cu")\n'
+        f'  (pad "1" thru_hole rect (at 0 0 {rotation}) (size 1 1) (layers "*.Cu" "*.Mask"))\n'
+        + "".join(
+            f'  (fp_line (start {a[0]} {a[1]}) (end {b[0]} {b[1]}) (stroke (width 0.05) (type solid)) (layer "F.CrtYd"))\n'
+            for a, b in zip(corners, corners[1:] + corners[:1], strict=True)
+        )
+        + ")\n"
+    )
+
+
+def test_a_pad_turned_45_degrees_is_measured_on_its_turned_outline():
+    # a 1 x 1 mm pad at 45 degrees reaches 0.707 mm out, not 0.5 mm, so this courtyard is
+    # 0.093 mm from the pad and has to be reported; unrotated it is 0.3 mm away and is not.
+    spec = _spec_for("SOIC", ["1"])
+    assert "footprint.courtyard_small" in _ids(check_footprint(spec, _one_pad(45, 0.8)))
+    assert "footprint.courtyard_small" not in _ids(check_footprint(spec, _one_pad(0, 0.8)))
+
+
+# --------------------------------------------------------------------------- SOT-23
+
+
+# A TI op amp in the DDC package: SOT-23-6, pitch 0.95, land span 2.7, lands 1.1 x 0.6.
+# SOT-23-8 (DBV) is the same package with a fourth pin per row at 0.65 mm pitch and
+# narrower lands, so its lands are given separately.
+SOT23 = {
+    "family": "SOT-23",
+    "dimensions": {
+        "pitch": {"nom": 0.95},
+        "overall_width": {"nom": 2.7},
+        "body_length": {"min": 2.9, "max": 3.0},
+        "body_width": {"min": 1.6, "max": 1.7},
+        "lead_width": {"min": 0.3, "max": 0.45},
+        "lead_length": {"min": 0.4, "max": 0.6},
+        "land_pad_length": {"nom": 1.1},
+        "land_pad_width": {"nom": 0.6},
+        "land_span": {"nom": 2.7},
+    },
+}
+SOT23_8 = copy.deepcopy(SOT23)
+SOT23_8["dimensions"]["pitch"] = {"nom": 0.65}
+SOT23_8["dimensions"]["land_pad_width"] = {"nom": 0.4}
+
+
+def _sot23(package, family=None):
+    """A SOT-23 PartSpec in the DDC land pattern, with the family spelled as given."""
+
+    def mutate(data):
+        data["package"] = copy.deepcopy(package)
+        if family is not None:
+            data["package"]["family"] = family
+        count = data["package"]["pin_count"]
+        data["pins"] = [
+            {"number": str(n), "name": f"P{n}", "electrical_type": "bidirectional"} for n in range(1, count + 1)
+        ]
+
+    return _spec("lm358_soic8", mutate)
+
+
+@pytest.mark.parametrize(("package", "count"), [(SOT23, 6), (SOT23_8, 8)], ids=["6 pins", "8 pins"])
+def test_an_even_pin_sot23_builds_with_no_findings(package, count):
+    spec = _sot23(dict(package, pin_count=count))
+    assert skip_reason(spec) is None
+    assert footprint_name(spec) == f"SOT-23-{count}"
+    assert check_footprint(spec, render_footprint(spec)) == []
+
+
+@pytest.mark.parametrize("family", ["SOT-23", "SOT23", "sot-23", "TSOT-23", "tsot23"])
+def test_every_datasheet_spelling_of_the_family_is_the_same_package(family):
+    spec = _sot23(dict(SOT23, pin_count=6), family=family)
+    assert skip_reason(spec) is None
+    expected = "TSOT-23-6" if family.upper().startswith("TSOT") else "SOT-23-6"
+    assert footprint_name(spec) == expected
+    assert check_footprint(spec, render_footprint(spec)) == []
+
+
+@pytest.mark.parametrize("family", ["SOT", "SOT-223", "SOT-89"])
+def test_a_sot_family_that_is_not_sot23_is_not_laid_out_as_two_rows(family):
+    # SOT-223 has three leads and a tab: four pins, but not two rows of two.
+    reason = skip_reason(_sot23(dict(SOT23, pin_count=4), family=family))
+    assert reason and "not supported" in reason
+
+
+@pytest.mark.parametrize("count", [3, 5])
+def test_an_odd_pin_sot23_is_skipped_for_its_unequal_rows(count):
+    reason = skip_reason(_sot23(dict(SOT23, pin_count=count)))
+    assert reason and "unequal rows" in reason and f"pin_count={count}" in reason
+
+
+def test_sot23_pads_are_numbered_counter_clockwise_from_the_top_left():
+    pads = {pad.number: pad for pad in compute_pads(_sot23(dict(SOT23, pin_count=6)))}
+    assert (pads["1"].x, pads["1"].y) == (-1.35, -0.95)  # land span 2.7, pitch 0.95
+    assert (pads["3"].x, pads["3"].y) == (-1.35, 0.95)
+    assert (pads["4"].x, pads["4"].y) == (1.35, 0.95)
+    assert (pads["6"].x, pads["6"].y) == (1.35, -0.95)
+    assert (pads["1"].width, pads["1"].height) == (1.1, 0.6)  # the datasheet land pattern
+
+
+def test_sot23_pad_numbering_agrees_with_the_official_kicad_footprint():
+    """The land itself differs (the datasheet's 2.7 mm span vs KiCad's 2.275 mm), so
+    compare what must agree: the pad numbers, their order, and the pitch."""
+    official = OFFICIAL / "Package_TO_SOT_SMD.pretty" / "SOT-23-6.kicad_mod"
+    if not official.is_file():
+        pytest.skip("KiCad footprint libraries not installed")
+    ours = _pads_of(render_footprint(_sot23(dict(SOT23, pin_count=6))))
+    theirs = _pads_of(official.read_text(encoding="utf-8"))
+    assert list(ours) == list(theirs) == ["1", "2", "3", "4", "5", "6"]  # same numbers, same order
+
+    def side(value):
+        return (value > 0.01) - (value < -0.01)
+
+    for number, pad in ours.items():
+        assert (side(pad[0]), side(pad[1])) == (side(theirs[number][0]), side(theirs[number][1])), number
+    # Down the left row the pads run top to bottom, and back up the right one.
+    assert [n for n in ours if ours[n][0] < 0] == ["1", "2", "3"]
+    assert [n for n in ours if ours[n][0] > 0] == ["4", "5", "6"]
+    left = [ours[n][1] for n in ("1", "2", "3")]
+    assert left == sorted(left)  # pin 1 at the top
+    assert [ours[n][1] for n in ("4", "5", "6")] == sorted((ours[n][1] for n in ("4", "5", "6")), reverse=True)
+    for pair in (("1", "2"), ("2", "3"), ("4", "5"), ("5", "6")):
+        assert abs((ours[pair[0]][1] - ours[pair[1]][1]) - (theirs[pair[0]][1] - theirs[pair[1]][1])) < 1e-6
+
+
 # --------------------------------------------------------------------------- CLI
 
 
@@ -368,11 +684,11 @@ def test_cli_build_writes_symbol_and_footprint(tmp_path, capsys):
     assert main(["build", str(spec_path), "--out", str(tmp_path / "out"), "--no-kicad", "--lib-name", "mylib"]) == 0
     report = json.loads(capsys.readouterr().out)
     names = sorted(Path(f).name for f in report["files"])
-    assert names == ["LM358.kicad_sym", "SOIC-8_3.9x4.9mm_P1.27mm.kicad_mod"]
+    assert names == ["LM358DR.kicad_sym", "SOIC-8_3.9x4.9mm_P1.27mm.kicad_mod"]
     assert (tmp_path / "out" / "mylib.pretty" / "SOIC-8_3.9x4.9mm_P1.27mm.kicad_mod").is_file()
-    assert 'property "Footprint" "mylib:SOIC-8_3.9x4.9mm_P1.27mm"' in (tmp_path / "out" / "LM358.kicad_sym").read_text(
-        encoding="utf-8"
-    )
+    assert 'property "Footprint" "mylib:SOIC-8_3.9x4.9mm_P1.27mm"' in (
+        tmp_path / "out" / "LM358DR.kicad_sym"
+    ).read_text(encoding="utf-8")
 
 
 def test_cli_build_without_a_land_pattern_still_builds_the_symbol(tmp_path, capsys):

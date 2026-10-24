@@ -20,7 +20,7 @@ from kicad_partspec.spec import load_spec
 from kicad_partspec.verify import verify_spec
 from kicad_partspec.verify.footprint_checks import check_footprint
 from kicad_partspec.verify.kicad_checks import check_footprint_loads, check_symbol_loads
-from kicad_partspec.verify.quotes import check_quotes, page_texts, sha256_of
+from kicad_partspec.verify.quotes import check_quotes, document_number, first_page, page_texts, sha256_of
 from kicad_partspec.verify.symbol_checks import check_symbol
 
 CONCISE = "concise"
@@ -53,12 +53,19 @@ def validate(data: Any, datasheet: Path | None = None) -> list[Finding]:
         ]
     declared = (data.get("datasheet") or {}).get("sha256") if isinstance(data.get("datasheet"), dict) else None
     actual = sha256_of(datasheet)
+    revision = (data.get("datasheet") or {}).get("revision") if isinstance(data.get("datasheet"), dict) else None
     if declared != actual:
+        number = document_number(revision if isinstance(revision, str) else "")
+        rebuilt = number is not None and number in first_page(datasheet)
         findings.append(
             Finding(
-                "prov.datasheet_sha_mismatch",
-                FAIL,
-                f"datasheet.sha256 is {declared!r} but the PDF's SHA-256 is {actual}; set datasheet.sha256 to that value.",
+                "prov.datasheet_rebuilt" if rebuilt else "prov.datasheet_sha_mismatch",
+                WARN if rebuilt else FAIL,
+                f"quotes checked against a same-revision rebuild of {number or 'this datasheet'}: the vendor "
+                "re-issued the PDF, so datasheet.sha256 does not match any local file. Do not rewrite the "
+                "spec's sha256 — it records the file the gold was built from."
+                if rebuilt
+                else f"datasheet.sha256 is {declared!r} but the PDF's SHA-256 is {actual}; set datasheet.sha256 to that value.",
                 path="datasheet.sha256",
                 expected=actual,
                 actual=declared,

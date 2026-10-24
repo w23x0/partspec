@@ -6,8 +6,8 @@ A model reads the datasheet and fills a PartSpec, a JSON file in which every val
 verbatim quote. Deterministic code generates the KiCad files and checks them independently: against the spec, against
 the PDF, and by loading them in `kicad-cli`.
 
-The accuracy of model extraction has only been measured on three parts, and the answer key for those was written by
-the same author as the skill and has not been reviewed by a human. See
+The accuracy of model extraction has been measured on twenty-three parts in four small rounds, against answer keys written
+and checked by models and not yet reviewed by a human. See
 [evals/README.md](https://github.com/w23x0/kicad-partspec/blob/main/evals/README.md) before relying on it.
 
 ## Status
@@ -21,17 +21,19 @@ the same author as the skill and has not been reviewed by a human. See
 | `kicad-cli` load check | done |
 | Footprint generation (dual-row and quad packages, exposed pad) from the datasheet land pattern | done |
 | Footprint checks (pads vs datasheet, pads reach leads, silkscreen, courtyard) + `kicad-cli` load | done |
-| MCP server (3 tools), skill, plugin manifests | done (plugin install not verified in Claude Code) |
-| Extraction evaluation (`evals/score.py`, round 1 in `evals/runs/`) | done, 3 parts only |
+| MCP server (3 tools), skill, plugin manifests | done; loads with `claude --plugin-dir` (marketplace install not tested) |
+| Extraction evaluation (`evals/score.py`, rounds 1 to 5 in `evals/runs/`) | done, 23 parts, 2 runs each |
 
 ## Install
 
-Python 3.10 to 3.13. Not on PyPI yet; from GitHub:
+Python 3.10 to 3.13.
 
 ```
-pip install "git+https://github.com/w23x0/kicad-partspec"                          # CLI
-pip install "kicad-partspec[mcp] @ git+https://github.com/w23x0/kicad-partspec"    # CLI + MCP server
+pip install kicad-partspec            # CLI
+pip install "kicad-partspec[mcp]"     # CLI + MCP server
 ```
+
+To try the development version instead: `pip install "git+https://github.com/w23x0/kicad-partspec"`.
 
 Optional tools the checks use when present: KiCad 9 or later (`kicad-cli`, for the load checks; without it you get a
 warning instead) and poppler (`pdftotext`, for the datasheet quote check).
@@ -57,7 +59,24 @@ Gold cases and their conventions are in `evals/README.md`. Generated symbols tar
 
 Footprints are generated from the datasheet's example land pattern (`land_*` dimensions), not computed from a standard,
 so a part whose datasheet has no land pattern gets a symbol and a `footprint.skipped` warning that names the missing
-dimensions.
+dimensions. Dual-row packages (SOIC, SOP, SSOP, TSSOP, MSOP, VSSOP, SOT-23 and TSOT-23) need an even pin count, and
+quad packages (QFN, VQFN, WQFN, UQFN, QFP, TQFP, LQFP) a pin count divisible by 4; an odd-pin SOT-23 such as SOT-23-5
+has unequal rows and is skipped with that reason.
+
+## Repository workflow
+
+`AGENTS.md` is the constitution every new agent session reads: the work loop, the red lines, and the gold-file arbitration
+protocol. The only progress signal is the audit board:
+
+```
+./scripts/audit.sh [--datasheets DIR_WITH_PDFS]
+```
+
+It prints the rule counts (total, covered, passing, failing, regressed, uncovered) from `spec/rules.json` plus three gold
+suites (`gold-spec`, `gold-quotes`, `gold-build`), and exits non-zero when a rule fails, a rule regresses, or a suite is
+not green. The datasheet PDFs are not stored here; without them the quote layer reports `skipped` and does not decide the
+exit status. An unattended loop drives one work cycle per round against that board (`scripts/loop.sh`); the round and
+independent-audit prompts are in `scripts/prompts/`.
 
 ## History
 

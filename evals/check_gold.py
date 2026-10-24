@@ -15,9 +15,9 @@ import os
 import sys
 from pathlib import Path
 
-from kicad_partspec.findings import FAIL, Finding, failed
+from kicad_partspec.findings import FAIL, WARN, Finding, failed
 from kicad_partspec.verify import verify_spec
-from kicad_partspec.verify.quotes import check_quotes, find_datasheet, page_texts
+from kicad_partspec.verify.quotes import check_quotes, page_texts, resolve_datasheet
 
 CASES = Path(__file__).parent / "cases"
 
@@ -37,7 +37,7 @@ def main() -> int:
         if datasheets is None:
             note = " (quotes not checked: no datasheet directory)"
         else:
-            pdf = find_datasheet(data["datasheet"]["sha256"], datasheets)
+            pdf, mode = resolve_datasheet(data["datasheet"], datasheets)
             if pdf is None:
                 findings.append(
                     Finding(
@@ -48,6 +48,17 @@ def main() -> int:
                     )
                 )
             else:
+                if mode == "rebuilt":
+                    findings.append(
+                        Finding(
+                            "prov.datasheet_rebuilt",
+                            WARN,
+                            "quotes checked against a same-revision rebuild (the vendor re-issued the PDF, so "
+                            "datasheet.sha256 does not match any local file); the document number and REVISED line "
+                            "on page 1 are the cited revision.",
+                            path="datasheet.sha256",
+                        )
+                    )
                 findings.extend(check_quotes(data, page_texts(pdf)))
         bad = [item for item in findings if item.status == FAIL]
         warnings = [item for item in findings if item.status != FAIL]
