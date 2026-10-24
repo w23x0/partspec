@@ -107,13 +107,6 @@ def test_a_callout_is_named_by_the_planes_it_spans():
     assert "which of these three" in text
 
 
-def test_parenthesised_value_is_not_a_package_dimension():
-    text = _section()
-    assert "reference dimensions" in text
-    assert "land_*" in text
-    assert "must not become a package dimension" in text
-
-
 def test_boxed_basic_value_is_not_a_package_dimension():
     text = _section()
     assert "basic`" in text

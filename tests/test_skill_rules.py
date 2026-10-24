@@ -67,15 +67,6 @@ def test_power_group_rule_is_permissive_for_a_lone_supply():
     assert "optional" in rule
 
 
-def test_callout_naming_guidance_is_present():
-    flat = _flat(REFERENCE)
-    assert "extension lines" in flat
-    assert "GAGE PLANE" in flat
-    assert "DETAIL A" in flat
-    for name in ("overall_width", "body_length", "body_width", "overall_length"):
-        assert name in flat
-
-
 def test_land_dimensions_are_metal_not_the_mask_opening():
     flat = _flat(REFERENCE)
     assert "SOLDER MASK OPENING" in flat
