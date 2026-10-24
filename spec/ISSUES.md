@@ -270,3 +270,44 @@
   刻意不收：VBUS（ina226 上是检测输入、cp2102n 上是稳压供电源，语义随零件而变，谓词化会
   误判）与 EP/PAD/DAP/E（PIN-001 议题，另有测试覆盖）。测试与注释写在
   `tests/test_rules.py` PIN-005 段。642 passed 无 gold 失败。
+
+## PIN-005 补记（2026-10-24，round 6）：VREF 是语境依赖名，谓词不再认领
+- 现象：round 6 新语料 mcp3008_soic16 的 pin 15 `VREF`（模拟基准输入）按 reference.md 的
+  analog-reference 行（约 :74 "an analog reference, or a pin with no signal direction at all →
+  `passive`"）记 `passive`，gold 与两个 run 读法一致；但 PIN-005 语料测试的电源名词干表含
+  `VREF`，强制电源类型，gold 直接触发测试失败——测试再次比正文强（与 PIN-004 同款）。
+  语料同时存在反向先例：pca9306 的 VREF1/VREF2 是偏置电源轨（`power_in`，round 4 裁定）。
+- 处理（用户授权会话执行）：`_SUPPLY_STEMS` 移除 `VREF`（照 VBUS 先例：语境依赖名不进谓词），
+  新增 `test_PIN_005_an_analog_reference_is_passive` 把两种读法都钉住（mcp3008 VREF=`passive`
+  + inferred；pca9306 VREF1/2=`power_in`），注释写明依据。正文与登记表不动（正文本就按语义
+  分行）。28/28 板面恢复全绿。
+- 状态：settled（补记）。
+
+## DIM-003 与 DIM-001 对"框住的基本尺寸"打架：pitch 只印作 boxed `12X 1.27` 时无解（round 6）
+- 现象：DIM-003（MUST）"a boxed basic … never record it as a size"；DIM-001 声明却把
+  "BSC → nom" 列为合法形态。SN74HC00 的 D0014A 图纸（SCLS181H p.23）只以框住的 `12X 1.27`
+  印出 pitch，land pattern 侧是括号 `(1.27)`——DIM-004 检查器禁止括号值进 package 尺寸，
+  `build` 又必须要 pitch。三条规则合起来：这张图上的 pitch 无路可走。
+- 两种读法：A 立例外——框住的基本值在"字母表把它指派给某维度名、且是该值的唯一印刷形态"时
+  记 `nom`（round 6 的 gold/run/裁决都走了这条路：adjudication 判 defensible，依据是
+  reference.md 整体读法 + example.json 的 BSC pitch 先例 + 字母表 `e`→pitch）；B 严守 DIM-003，
+  pitch 缺席并在 hand-over 声明——build 将对这类 TI 图纸永远出不了 footprint。
+- 证据：SN74HC00 gold review 的 tension 段、`round6_adjudication.md` sn74hc00 节（600 dpi
+  像素测量 `12X 1.27` 确为相邻中心距）、evals/cases/sn74hc00_soic14/spec.gold.json pitch 条目。
+- 建议：按读法 A 在 DIM-003 正文补一句例外（点名 pitch `e`），DIM-001 的 BSC 条目不动；
+  GAGE-PLANE 偏移的禁令保持原样。
+- 状态：open（round 6 实践已记录在案：gold 按读法 A 记了、裁决维持；等人类把例外写进正文）。
+
+## PIN-004 后续（round 6）："repeated, identical functional blocks" 的边界——数据表自己的词汇决定
+- 现象：round 6 两个同构场景被裁成两半：mcp3008 的 CH0–CH7（数据表通篇称 "channels"，
+  gold 按通道分组，裁决维持 GOLD）；pcf8574 的 P0–P7（数据表称 "8-bit quasi-bidirectional
+  I/O port (P0–P7)" 的各个位，"channel" 一词在 SCPS068K 中不存在，gold 的逐脚 P0…P7 键被
+  裁撤 [GOLD]，两 run 的不分组被判对）。语料先例同向：74hc595 Q0–Q7、mcp23008 GP0–GP7 均
+  不分组。正文从未定义 "unit" 与 "block" 的分界，两 run 对同类结构给过两种答案。
+- 两种读法：A 把口径写进正文 group bullet——"数据表把这块叫什么就按什么算：channel/单元名
+  逐脚成组；port 的各位不是 units，保持不分组"；B 不改正文，作为裁决判例留在各 review.md。
+- 证据：evals/runs/round6_adjudication.md 的 mcp3008/pcf8574 两节（页码引文在案）、两份
+  gold 的 review.md 更正段、上列语料先例。
+- 建议：读法 A，一句话的正文修订；同时考虑把"port 位不分组"与"孤立电源可选"并成 group
+  bullet 的完整判例段。
+- 状态：open（round 6 实践与裁决在案，等人类拍板措辞）。

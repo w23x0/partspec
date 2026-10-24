@@ -1,0 +1,98 @@
+{
+  "mpn": "SN74HC00D",
+  "manufacturer": "Texas Instruments",
+  "datasheet": {
+    "sha256": "e53f9214ecb928b870da41e540821fc182559bdad2611fe7047cc9d9693a4c75",
+    "revision": "SCLS181H"
+  },
+  "package": {
+    "family": "SOIC",
+    "pin_count": 14,
+    "exposed_pad": false,
+    "dimensions": {
+      "pitch": {
+        "nom": 1.27,
+        "source": {"page": 23, "quote": "12X 1.27"},
+        "status": "inferred"
+      },
+      "body_length": {
+        "min": 8.55,
+        "max": 8.75,
+        "source": {"page": 23, "quote": "8.75 2X 8.55 7.62 NOTE 3"},
+        "status": "extracted"
+      },
+      "body_width": {
+        "min": 3.8,
+        "max": 4.0,
+        "source": {"page": 23, "quote": "4.0 0.31 B 1.75 MAX 3.8 0.25 C A B NOTE 4"},
+        "status": "extracted"
+      },
+      "overall_width": {
+        "min": 5.8,
+        "max": 6.2,
+        "source": {"page": 23, "quote": "6.2 TYP SEATING PLANE 5.8"},
+        "status": "extracted"
+      },
+      "height": {
+        "max": 1.75,
+        "source": {"page": 23, "quote": "1.75 MAX"},
+        "status": "extracted"
+      },
+      "standoff": {
+        "min": 0.1,
+        "max": 0.25,
+        "source": {"page": 23, "quote": "0.25 0 -8 1.27 0.10"},
+        "status": "inferred"
+      },
+      "lead_width": {
+        "min": 0.31,
+        "max": 0.51,
+        "source": {"page": 23, "quote": "0.51 14X 4.0 0.31"},
+        "status": "extracted"
+      },
+      "lead_thickness": {
+        "min": 0.13,
+        "max": 0.25,
+        "source": {"page": 23, "quote": "0.25 TYP 0.13"},
+        "status": "extracted"
+      },
+      "lead_length": {
+        "min": 0.4,
+        "max": 1.27,
+        "source": {"page": 23, "quote": "1.27 0.10 0.40"},
+        "status": "extracted"
+      },
+      "land_pad_length": {
+        "nom": 1.55,
+        "source": {"page": 24, "quote": "14X (1.55)"},
+        "status": "extracted"
+      },
+      "land_pad_width": {
+        "nom": 0.6,
+        "source": {"page": 24, "quote": "14X (0.6)"},
+        "status": "extracted"
+      },
+      "land_span": {
+        "nom": 5.4,
+        "source": {"page": 24, "quote": "(5.4)"},
+        "status": "extracted"
+      }
+    }
+  },
+  "pins": [
+    {"number": "1", "name": "1A", "electrical_type": "input", "group": "1", "source": {"page": 3, "quote": "1A 1 2 Input Channel 1, Input A"}, "status": "extracted"},
+    {"number": "2", "name": "1B", "electrical_type": "input", "group": "1", "source": {"page": 3, "quote": "1B 2 3 Input Channel 1, Input B"}, "status": "extracted"},
+    {"number": "3", "name": "1Y", "electrical_type": "output", "group": "1", "source": {"page": 3, "quote": "1Y 3 4 Output Channel 1, Output Y"}, "status": "extracted"},
+    {"number": "4", "name": "2A", "electrical_type": "input", "group": "2", "source": {"page": 3, "quote": "2A 4 6 Input Channel 2, Input A"}, "status": "extracted"},
+    {"number": "5", "name": "2B", "electrical_type": "input", "group": "2", "source": {"page": 3, "quote": "2B 5 8 Input Channel 2, Input B"}, "status": "extracted"},
+    {"number": "6", "name": "2Y", "electrical_type": "output", "group": "2", "source": {"page": 3, "quote": "2Y 6 9 Output Channel 2, Output Y"}, "status": "extracted"},
+    {"number": "7", "name": "GND", "electrical_type": "power_in", "group": "power", "source": {"page": 3, "quote": "GND 7 10 — Ground"}, "status": "inferred"},
+    {"number": "8", "name": "3Y", "electrical_type": "output", "group": "3", "source": {"page": 3, "quote": "3Y 8 12 Output Channel 3, Output Y"}, "status": "extracted"},
+    {"number": "9", "name": "3A", "electrical_type": "input", "group": "3", "source": {"page": 3, "quote": "3A 9 13 Input Channel 3, Input A"}, "status": "extracted"},
+    {"number": "10", "name": "3B", "electrical_type": "input", "group": "3", "source": {"page": 3, "quote": "3B 10 14 Input Channel 3, Input B"}, "status": "extracted"},
+    {"number": "11", "name": "4Y", "electrical_type": "output", "group": "4", "source": {"page": 3, "quote": "4Y 11 16 Output Channel 4, Output Y"}, "status": "extracted"},
+    {"number": "12", "name": "4A", "electrical_type": "input", "group": "4", "source": {"page": 3, "quote": "4A 12 18 Input Channel 4, Input A"}, "status": "extracted"},
+    {"number": "13", "name": "4B", "electrical_type": "input", "group": "4", "source": {"page": 3, "quote": "4B 13 19 Input Channel 4, Input B"}, "status": "extracted"},
+    {"number": "14", "name": "VCC", "electrical_type": "power_in", "group": "power", "source": {"page": 3, "quote": "VCC 14 20 — Positive Supply"}, "status": "inferred"}
+  ]
+}

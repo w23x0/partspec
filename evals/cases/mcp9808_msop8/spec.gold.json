@@ -1,0 +1,209 @@
+{
+  "mpn": "MCP9808-E/MS",
+  "manufacturer": "Microchip Technology Inc.",
+  "datasheet": {
+    "sha256": "9578bb72de18d76830ce34f256ef36b400542a3e7bbb9c6d0b74f0a72577ee11",
+    "revision": "Revision A (October 2011)",
+    "url": "https://ww1.microchip.com/downloads/en/DeviceDoc/25095A.pdf"
+  },
+  "package": {
+    "family": "MSOP",
+    "pin_count": 8,
+    "exposed_pad": false,
+    "dimensions": {
+      "pitch": {
+        "nom": 0.65,
+        "source": {
+          "page": 40,
+          "quote": "3LWFK                                        H                   \u0013\u0011\u0019\u0018\u0003%6&"
+        },
+        "status": "inferred"
+      },
+      "body_length": {
+        "nom": 3.0,
+        "source": {
+          "page": 40,
+          "quote": "2YHUDOO\u0003/HQJWK                               '                   \u0016\u0011\u0013\u0013\u0003%6&"
+        },
+        "status": "inferred"
+      },
+      "body_width": {
+        "nom": 3.0,
+        "source": {
+          "page": 40,
+          "quote": "0ROGHG\u00033DFNDJH\u0003:LGWK                        (\u0014                   \u0016\u0011\u0013\u0013\u0003%6&"
+        },
+        "status": "inferred"
+      },
+      "overall_width": {
+        "nom": 4.9,
+        "source": {
+          "page": 40,
+          "quote": "2YHUDOO\u0003:LGWK                                (                   \u0017\u0011\u001c\u0013\u0003%6&"
+        },
+        "status": "inferred"
+      },
+      "height": {
+        "max": 1.1,
+        "source": {
+          "page": 40,
+          "quote": "2YHUDOO\u0003+HLJKW                               $         \u00b1             \u00b1           \u0014\u0011\u0014\u0013"
+        },
+        "status": "inferred"
+      },
+      "body_thickness": {
+        "min": 0.75,
+        "nom": 0.85,
+        "max": 0.95,
+        "source": {
+          "page": 40,
+          "quote": "0ROGHG\u00033DFNDJH\u00037KLFNQHVV                    $\u0015       \u0013\u0011\u001a\u0018          \u0013\u0011\u001b\u0018          \u0013\u0011\u001c\u0018"
+        },
+        "status": "inferred"
+      },
+      "standoff": {
+        "min": 0.0,
+        "max": 0.15,
+        "source": {
+          "page": 40,
+          "quote": "6WDQGRII\u0003                                   $\u0014       \u0013\u0011\u0013\u0013            \u00b1           \u0013\u0011\u0014\u0018"
+        },
+        "status": "inferred"
+      },
+      "lead_width": {
+        "min": 0.22,
+        "max": 0.4,
+        "source": {
+          "page": 40,
+          "quote": "/HDG\u0003:LGWK                                    E        \u0013\u0011\u0015\u0015           \u00b1            \u0013\u0011\u0017\u0013"
+        },
+        "status": "inferred"
+      },
+      "lead_length": {
+        "min": 0.4,
+        "nom": 0.6,
+        "max": 0.8,
+        "source": {
+          "page": 40,
+          "quote": ")RRW\u0003/HQJWK                                  /       \u0013\u0011\u0017\u0013          \u0013\u0011\u0019\u0013          \u0013\u0011\u001b\u0013"
+        },
+        "status": "inferred"
+      },
+      "lead_thickness": {
+        "min": 0.08,
+        "max": 0.23,
+        "source": {
+          "page": 40,
+          "quote": "/HDG\u00037KLFNQHVV                               F       \u0013\u0011\u0013\u001b            \u00b1           \u0013\u0011\u0015\u0016"
+        },
+        "status": "inferred"
+      },
+      "land_pad_length": {
+        "source": {
+          "page": 41,
+          "quote": "\u00a9 2011 Microchip Technology Inc. DS25095A-page 41"
+        },
+        "status": "inferred",
+        "max": 1.45
+      },
+      "land_pad_width": {
+        "source": {
+          "page": 41,
+          "quote": "\u00a9 2011 Microchip Technology Inc. DS25095A-page 41"
+        },
+        "status": "inferred",
+        "max": 0.45
+      },
+      "land_span": {
+        "source": {
+          "page": 41,
+          "quote": "\u00a9 2011 Microchip Technology Inc. DS25095A-page 41"
+        },
+        "status": "inferred",
+        "nom": 4.4
+      }
+    }
+  },
+  "pins": [
+    {
+      "number": "1",
+      "name": "SDA",
+      "electrical_type": "bidirectional",
+      "source": {
+        "page": 11,
+        "quote": "1 1 SDA Serial Data Line"
+      },
+      "status": "extracted"
+    },
+    {
+      "number": "2",
+      "name": "SCL",
+      "electrical_type": "input",
+      "source": {
+        "page": 11,
+        "quote": "2 2 SCL Serial Clock Line"
+      },
+      "status": "extracted"
+    },
+    {
+      "number": "3",
+      "name": "Alert",
+      "electrical_type": "open_collector",
+      "source": {
+        "page": 11,
+        "quote": "3 3 Alert Temperature Alert Output"
+      },
+      "status": "inferred"
+    },
+    {
+      "number": "4",
+      "name": "GND",
+      "electrical_type": "power_in",
+      "source": {
+        "page": 11,
+        "quote": "4 4 GND Ground"
+      },
+      "status": "inferred"
+    },
+    {
+      "number": "5",
+      "name": "A2",
+      "electrical_type": "input",
+      "source": {
+        "page": 11,
+        "quote": "5 5 A2 Slave Address"
+      },
+      "status": "extracted"
+    },
+    {
+      "number": "6",
+      "name": "A1",
+      "electrical_type": "input",
+      "source": {
+        "page": 11,
+        "quote": "6 6 A1 Slave Address"
+      },
+      "status": "extracted"
+    },
+    {
+      "number": "7",
+      "name": "A0",
+      "electrical_type": "input",
+      "source": {
+        "page": 11,
+        "quote": "7 7 A0 Slave Address"
+      },
+      "status": "extracted"
+    },
+    {
+      "number": "8",
+      "name": "VDD",
+      "electrical_type": "power_in",
+      "source": {
+        "page": 11,
+        "quote": "8 8 VDD Power Pin"
+      },
+      "status": "inferred"
+    }
+  ]
+}

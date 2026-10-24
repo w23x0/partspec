@@ -39,7 +39,7 @@ official KiCad library, and each round's adjudication — plus the gold errors t
 after the fact, listed per round below. Where a contested reading had no rule behind it, the rule was
 written into `skills/partspec/reference.md` rather than left for a reader to re-decide.
 
-The round-2, round-4 and round-5 cases were also cross-checked against the official KiCad library symbol and footprint; each case's `review.md` lists every disagreement with KiCad and how it was decided. Reading the disagreements with the extraction runs afterwards still found two gold errors in round 2, four in round 4 and five in round 5, so the golds are model-derived drafts whose checks are the ones described here and nothing more.
+The round-2, round-4, round-5 and round-6 cases were also cross-checked against the official KiCad library symbol and footprint; each case's `review.md` lists every disagreement with KiCad and how it was decided. Reading the disagreements with the extraction runs afterwards still found two gold errors in round 2, four in round 4, five in round 5 and two in round 6, so the golds are model-derived drafts whose checks are the ones described here and nothing more.
 
 ## What is checked automatically
 
@@ -517,3 +517,116 @@ convention here is not a rule a run is graded against. No code changed.
 - "Quotes not on page" is measured with the validator in the loop, as in rounds 1 and 2. It is not a first-attempt rate.
 - Round 4 was run on this same harness and this same skill and is written up above, its golds now in `cases/`; round 3's
   data is not in this repository, so the documented rounds are not a continuous series.
+
+## Extraction round 6
+
+Five parts from three vendors, two runs each, none of them used to write the skill or any gold, and
+the first round on the skill as revised after round 5 (the `mpn` rule as printed, `power` un-gated,
+`alt_names` from this part only, callouts named by their extension lines, the boxed-basic /
+`GAGE PLANE` exclusion, the body-face-to-tip exclusion, `land_*` from the metal rectangle) and with
+SRC-006's numberless-quote hole closed the same week. Outputs are in `runs/round6/`, scores in
+`runs/round6_scores.json`, the full adjudication in `runs/round6_adjudication.md`; reproduce with
+`python evals/score.py --extracted evals/runs/round6 --datasheets DIR`.
+
+Cases: `lm393b_soic8` (TI LM393B, SOIC-8), `sn74hc00_soic14` (TI SN74HC00, SOIC-14),
+`mcp3008_soic16` (Microchip MCP3008, SOIC-16), `pcf8574_soic16` (TI PCF8574, SOIC-16 DW),
+`mcp9808_msop8` (Microchip MCP9808, MSOP-8).
+
+How it was run:
+
+- Each run was a fresh agent session on this session's model (GLM, served through ZCode), started
+  in an empty directory holding only the datasheet PDF, with the skill files as its complete
+  instructions and the repository's own CLI in the loop: `kicad-partspec validate --datasheet` run
+  until `failed: []`, then `build` and `verify`. The run directories held no path into `evals/`.
+- Gold: written only after both of a case's runs had finished, by separate agent sessions barred
+  from `runs/` and from the run directories, every pin and dimension checked on rendered pages
+  (up to 600 dpi crops) and cross-checked against the official KiCad symbol and footprint.
+- Adjudication: one agent per case, working from the PDF text and 150–1200 dpi renders, deciding
+  every scored disagreement against `SKILL.md` and `reference.md` with one of four verdicts
+  (**GOLD** gold right, **RUN** run right, **BOTH** either is permitted, **NEITHER** both wrong),
+  plus a full independent audit of the gold itself — the check that caught both gold errors below.
+  Grand tally: **GOLD 157 · RUN 4 · BOTH 1 · NEITHER 0** over 162 items. The two corrections:
+  - `mcp3008_soic16`: the gold's premise that the datasheet has no land pattern for the SL package
+    was wrong — page 33 carries drawing C04-2108A, a RECOMMENDED LAND PATTERN for exactly the
+    16-lead SL package the `mpn` orders (Y 1.50 MAX, X 0.60 MAX, C 5.40 NOM). The three `land_*`
+    values were added; run1 had recorded them first and had been scored wrong against the original
+    gold.
+  - `pcf8574_soic16`: the gold grouped P0–P7 each under its own name as key; the runs left them
+    ungrouped. The datasheet presents P0–P7 as the bits of one 8-bit quasi-bidirectional I/O port
+    and the word "channel" appears nowhere in SCPS068K, while the corpus's accepted golds for
+    identical structures (74hc595's Q0–Q7, mcp23008's GP0–GP7) leave port bits ungrouped — the
+    eight group keys were removed, which is what makes both runs usable.
+
+| Run | types | dims | quotes not on page | usable as scored |
+|---|---|---|---|---|
+| lm393b run1 / run2 | 8/8, 8/8 | 12/12, 10/12 | 0/20, 0/20 | yes, yes |
+| sn74hc00 run1 / run2 | 14/14, 14/14 | 12/12, 12/12 | 0/26, 0/26 | yes, yes |
+| mcp3008 run1 / run2 | 16/16, 16/16 | 13/13, 10/13 | 0/29, 0/26 | no, no |
+| pcf8574 run1 / run2 | 16/16, 16/16 | 12/12, 12/12 | 0/28, 0/28 | yes, yes |
+| mcp9808 run1 / run2 | 8/8, 8/8 | 10/13, 10/13 | 0/18, 0/18 | no, no |
+| **total** | **124/124** | **117/122** | **0/239** | **6/10** |
+
+"Usable" is the scorer's own definition: the generated symbol and footprint are identical to the
+gold's and every quote is on its page. Adjudication moved no run into or out of this column: the
+four RUN/BOTH verdicts all belonged to runs that had already failed on something else.
+
+### What went wrong
+
+Pin **types** were again the thing that went right — 124 of 124, every run found every pin, and no
+run invented a pin, number or name; **0 of 239 quotes were off their page**. The failures:
+
+- **Grouping vocabulary is now the live question.** Both mcp3008 runs grouped CH0–CH7 and both
+  pcf8574 runs left P0–P7 ungrouped — and the adjudication upheld both readings: the mcp3008
+  datasheet names its inputs "channels" and its gold grouping held (the pcf8574-style "one port,
+  eight bits" reading lost), while the pcf8574 datasheet presents P0–P7 as the bits of one port and
+  the gold's per-pin channel keys lost. The line the two verdicts draw: the datasheet's own
+  vocabulary for the block decides. Two runs applied the mcp3008 reading to pcf8574 and would have
+  passed had the gold not; the mcp3008 runs' ungrouped supplies are the optional case (`BOTH`).
+  The tension is recorded in `spec/ISSUES.md` for a human to settle into prose.
+- **A boxed basic as the only printed pitch.** SN74HC00's D0014A outline prints pitch only as the
+  boxed `12X 1.27`, which reference.md's boxed rule forbids recording as a size — yet `build`
+  requires `pitch`. run1 recorded it `inferred` and flagged the tension; the gold and run2 recorded
+  it following the skill example's BSC precedent, and the adjudicator ruled the record defensible
+  (BSC ⇒ nom; the letter table maps `e` to pitch). The prose contradiction is recorded in
+  `spec/ISSUES.md` rather than resolved here.
+- **CID-font pages defeat text-layer search.** Both Microchip datasheets set their package-drawing
+  pages in a font whose digits extract as control bytes: no ASCII-digit quote can exist there, so
+  every dimension from those pages is honestly `inferred` (mcp3008 10, mcp9808 13). The same
+  defect caused the round's most instructive miss: MCP9808's land pattern lives on page 41, a page
+  neither run rendered (nothing searchable points there — the runs' own note), so all four
+  mcp3008/mcp9808-run land failures trace to pages the text layer made invisible. mcp3008's land
+  pattern (page 33) was found by run1 but mislaid by the gold author; the adjudicator restored it.
+- **The golds' own errors** — two, both caught by the adjudicators' full reads rather than by the
+  score: the mcp3008 land-pattern premise above, and the pcf8574 grouping above. No run error was
+  overturned; lm393b's run2 swapped `standoff` with `lead_thickness` (DETAIL A vs the side view)
+  and lost two dims on it, the round's only genuine misread.
+- Nothing else. No run invented a package family, no checker complaint fired on a correct result.
+
+### What the round says about the previous round's skill changes
+
+Every round-5 fix held on parts that exercise it: `mpn` as printed (`LM393BIDR`, `MCP9808-E/MS`,
+the DW/DR suffix calls) produced no disagreement; `power` un-gated matched the golds on three
+parts' supplies; `alt_names` stayed empty where sibling parts or package variants tempted it
+(MCP3004's NC pins, PCF8574A, the DFN's EP); the boxed-basic and GAGE-PLANE exclusions were
+applied by all ten runs without one recorded gage-plane offset; the body-face-to-tip exclusion
+held on four datasheets that print `L1 "Footprint" REF`; `land_*` came from the metal rectangle
+where one existed. The extension-line rule settled both lm393b callout questions at adjudication,
+but lm393b run2 misread it in extraction — the one place the round's dominant failure mode is
+still the round-5 one. New in this round: the CID-font pages (above), and the grouping vocabulary
+question, which the rules never state and no run could derive from them.
+
+### Read these numbers with care
+
+- Five parts, two runs each, one model — this session's own — extracting, authoring the golds and
+  adjudicating. No human has read the golds or the adjudication beyond assembly; as in every round,
+  they are drafts whose checks are the ones described here.
+- The two gold corrections both moved fields onto the runs' side, and they were made by the process
+  that graded them — with the difference that each was re-verified on rendered pages by an
+  adjudicator that had first declared the gold right, then corrected itself against the drawing.
+- `usable` turns on provenance fields the rules mark optional: `datasheet.url` is optional in
+  reference.md, the golds all record it, and the generated symbol embeds it as a property — mcp3008
+  run1, whose dimensions and footprint match the corrected gold exactly, still fails `usable` on
+  the group question (`BOTH`) and that property. The scorer is mechanical; the adjudication records
+  where its verdicts and the rules' permissions diverge.
+- "Quotes not on page" is measured with the validator in the loop, as in every round. It is not a
+  first-attempt rate.

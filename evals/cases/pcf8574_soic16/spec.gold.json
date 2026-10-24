@@ -1,0 +1,281 @@
+{
+  "mpn": "PCF8574DW",
+  "manufacturer": "Texas Instruments",
+  "datasheet": {
+    "sha256": "9f2c7693d36498aaa8f8962589c6062d3c093136ace85090d935aff3967a8079",
+    "revision": "SCPS068K – JULY 2001 – REVISED SEPTEMBER 2024",
+    "url": "https://www.ti.com/lit/ds/symlink/pcf8574.pdf"
+  },
+  "package": {
+    "family": "SOIC",
+    "pin_count": 16,
+    "exposed_pad": false,
+    "dimensions": {
+      "pitch": {
+        "nom": 1.27,
+        "source": {
+          "page": 36,
+          "quote": "14X 1.27"
+        },
+        "status": "extracted"
+      },
+      "body_length": {
+        "min": 10.1,
+        "max": 10.5,
+        "source": {
+          "page": 36,
+          "quote": "10.5 2X 10.1 8.89 NOTE 3"
+        },
+        "status": "extracted"
+      },
+      "body_width": {
+        "min": 7.4,
+        "max": 7.6,
+        "source": {
+          "page": 36,
+          "quote": "7.6 B 0.25 C A B 2.65 MAX 7.4 NOTE 4"
+        },
+        "status": "extracted"
+      },
+      "overall_width": {
+        "min": 9.97,
+        "max": 10.63,
+        "source": {
+          "page": 36,
+          "quote": "10.63 SEATING PLANE TYP 9.97"
+        },
+        "status": "extracted"
+      },
+      "height": {
+        "max": 2.65,
+        "source": {
+          "page": 36,
+          "quote": "2.65 MAX"
+        },
+        "status": "extracted"
+      },
+      "lead_width": {
+        "min": 0.31,
+        "max": 0.51,
+        "source": {
+          "page": 36,
+          "quote": "0.51 16X 0.31"
+        },
+        "status": "extracted"
+      },
+      "lead_thickness": {
+        "min": 0.1,
+        "max": 0.33,
+        "source": {
+          "page": 36,
+          "quote": "0.33 TYP 0.10"
+        },
+        "status": "extracted"
+      },
+      "standoff": {
+        "min": 0.1,
+        "max": 0.3,
+        "source": {
+          "page": 36,
+          "quote": "0.3 0 -8 0.1"
+        },
+        "status": "inferred"
+      },
+      "lead_length": {
+        "min": 0.4,
+        "max": 1.27,
+        "source": {
+          "page": 36,
+          "quote": "1.27 0.40"
+        },
+        "status": "extracted"
+      },
+      "land_pad_length": {
+        "nom": 2.0,
+        "source": {
+          "page": 37,
+          "quote": "16X (2)"
+        },
+        "status": "extracted"
+      },
+      "land_pad_width": {
+        "nom": 0.6,
+        "source": {
+          "page": 37,
+          "quote": "16X (0.6)"
+        },
+        "status": "extracted"
+      },
+      "land_span": {
+        "nom": 9.3,
+        "source": {
+          "page": 37,
+          "quote": "(9.3)"
+        },
+        "status": "extracted"
+      }
+    }
+  },
+  "pins": [
+    {
+      "number": "1",
+      "name": "A0",
+      "electrical_type": "input",
+      "source": {
+        "page": 3,
+        "quote": "A0 1 16 VCC"
+      },
+      "status": "extracted"
+    },
+    {
+      "number": "2",
+      "name": "A1",
+      "electrical_type": "input",
+      "source": {
+        "page": 3,
+        "quote": "A1 2 15 SDA"
+      },
+      "status": "extracted"
+    },
+    {
+      "number": "3",
+      "name": "A2",
+      "electrical_type": "input",
+      "source": {
+        "page": 3,
+        "quote": "A2 3 14 SCL"
+      },
+      "status": "extracted"
+    },
+    {
+      "number": "4",
+      "name": "P0",
+      "electrical_type": "bidirectional",
+      "source": {
+        "page": 3,
+        "quote": "4 13 INT P0"
+      },
+      "status": "extracted"
+    },
+    {
+      "number": "5",
+      "name": "P1",
+      "electrical_type": "bidirectional",
+      "source": {
+        "page": 3,
+        "quote": "P1 5 12 P7"
+      },
+      "status": "extracted"
+    },
+    {
+      "number": "6",
+      "name": "P2",
+      "electrical_type": "bidirectional",
+      "source": {
+        "page": 3,
+        "quote": "P2 6 11 P6"
+      },
+      "status": "extracted"
+    },
+    {
+      "number": "7",
+      "name": "P3",
+      "electrical_type": "bidirectional",
+      "source": {
+        "page": 3,
+        "quote": "P3 7 10 P5"
+      },
+      "status": "extracted"
+    },
+    {
+      "number": "8",
+      "name": "GND",
+      "electrical_type": "power_in",
+      "source": {
+        "page": 3,
+        "quote": "GND 8 9 P4"
+      },
+      "status": "inferred"
+    },
+    {
+      "number": "9",
+      "name": "P4",
+      "electrical_type": "bidirectional",
+      "source": {
+        "page": 3,
+        "quote": "GND 8 9 P4"
+      },
+      "status": "extracted"
+    },
+    {
+      "number": "10",
+      "name": "P5",
+      "electrical_type": "bidirectional",
+      "source": {
+        "page": 3,
+        "quote": "P3 7 10 P5"
+      },
+      "status": "extracted"
+    },
+    {
+      "number": "11",
+      "name": "P6",
+      "electrical_type": "bidirectional",
+      "source": {
+        "page": 3,
+        "quote": "P2 6 11 P6"
+      },
+      "status": "extracted"
+    },
+    {
+      "number": "12",
+      "name": "P7",
+      "electrical_type": "bidirectional",
+      "source": {
+        "page": 3,
+        "quote": "P1 5 12 P7"
+      },
+      "status": "extracted"
+    },
+    {
+      "number": "13",
+      "name": "INT",
+      "electrical_type": "open_collector",
+      "source": {
+        "page": 3,
+        "quote": "4 13 INT"
+      },
+      "status": "inferred"
+    },
+    {
+      "number": "14",
+      "name": "SCL",
+      "electrical_type": "input",
+      "source": {
+        "page": 3,
+        "quote": "A2 3 14 SCL"
+      },
+      "status": "extracted"
+    },
+    {
+      "number": "15",
+      "name": "SDA",
+      "electrical_type": "bidirectional",
+      "source": {
+        "page": 3,
+        "quote": "A1 2 15 SDA"
+      },
+      "status": "extracted"
+    },
+    {
+      "number": "16",
+      "name": "VCC",
+      "electrical_type": "power_in",
+      "source": {
+        "page": 3,
+        "quote": "A0 1 16 VCC"
+      },
+      "status": "inferred"
+    }
+  ]
+}

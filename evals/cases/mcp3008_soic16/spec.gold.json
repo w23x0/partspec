@@ -1,0 +1,297 @@
+{
+  "mpn": "MCP3008-I/SL",
+  "manufacturer": "Microchip Technology Inc.",
+  "datasheet": {
+    "sha256": "e6c2231de727395ff42b094ed4ffd185db77b3958ac0b805f97330f4ad4b1122",
+    "revision": "DS21295D",
+    "url": "https://ww1.microchip.com/downloads/en/DeviceDoc/21295d.pdf"
+  },
+  "package": {
+    "family": "SOIC",
+    "pin_count": 16,
+    "exposed_pad": false,
+    "dimensions": {
+      "pitch": {
+        "source": {
+          "page": 32,
+          "quote": "\u0007%\b                                                    \u000e                            \u001d\u0014\u0003\u0005\u00021\u0016+"
+        },
+        "status": "inferred",
+        "nom": 1.27
+      },
+      "body_length": {
+        "source": {
+          "page": 32,
+          "quote": ":\u001f\u000e \u001c\u0010\u0010\u00029\u000e\u000f\u0011%                                           \u0015                            \u0018\u0014\u0018\u0004\u00021\u0016+"
+        },
+        "status": "inferred",
+        "nom": 9.9
+      },
+      "body_width": {
+        "source": {
+          "page": 32,
+          "quote": "\u0006 \u0010\"\u000e\"\u0002\u001e\u001c\b4\u001c\u0011\u000e\u0002=\u0007\"%                                    -\u001d                            ,\u0014\u0018\u0004\u00021\u0016+"
+        },
+        "status": "inferred",
+        "nom": 3.9
+      },
+      "overall_width": {
+        "source": {
+          "page": 32,
+          "quote": ":\u001f\u000e \u001c\u0010\u0010\u0002=\u0007\"%                                            -                            ?\u0014\u0004\u0004\u00021\u0016+"
+        },
+        "status": "inferred",
+        "nom": 6.0
+      },
+      "height": {
+        "source": {
+          "page": 32,
+          "quote": ":\u001f\u000e \u001c\u0010\u0010\u00028\u000e\u0007\u0011 %                                          \u0019              <                  <              \u001d\u0014\u00050"
+        },
+        "status": "inferred",
+        "max": 1.75
+      },
+      "body_thickness": {
+        "source": {
+          "page": 32,
+          "quote": "\u0006 \u0010\"\u000e\"\u0002\u001e\u001c\b4\u001c\u0011\u000e\u0002                 \u0007\b4\u000f\u000e                  \u0019\u0003             \u001d\u0014\u00030                <               <"
+        },
+        "status": "inferred",
+        "min": 1.25
+      },
+      "standoff": {
+        "source": {
+          "page": 32,
+          "quote": "\u0016%\u001c\u000f\" $$\u0002\u0002*                                            \u0019\u001d             \u0004\u0014\u001d\u0004                <              \u0004\u0014\u00030"
+        },
+        "status": "inferred",
+        "min": 0.1,
+        "max": 0.25
+      },
+      "lead_length": {
+        "source": {
+          "page": 32,
+          "quote": "3      %\u00029\u000e\u000f\u0011%                                          9             \u0004\u0014\u0017\u0004                <              \u001d\u0014\u0003\u0005"
+        },
+        "status": "inferred",
+        "min": 0.4,
+        "max": 1.27
+      },
+      "lead_thickness": {
+        "source": {
+          "page": 32,
+          "quote": "9\u000e\u001c\"\u0002      \u0007\b4\u000f\u000e                                        \b             \u0004\u0014\u001d\u0005                <              \u0004\u0014\u00030"
+        },
+        "status": "inferred",
+        "min": 0.17,
+        "max": 0.25
+      },
+      "lead_width": {
+        "source": {
+          "page": 32,
+          "quote": "9\u000e\u001c\"\u0002=\u0007\"%                                               (             \u0004\u0014,\u001d                <              \u0004\u00140"
+        },
+        "status": "inferred",
+        "min": 0.31,
+        "max": 0.51
+      },
+      "land_pad_length": {
+        "source": {
+          "page": 33,
+          "quote": "MCP3004/3008"
+        },
+        "status": "inferred",
+        "max": 1.5
+      },
+      "land_pad_width": {
+        "source": {
+          "page": 33,
+          "quote": "MCP3004/3008"
+        },
+        "status": "inferred",
+        "max": 0.6
+      },
+      "land_span": {
+        "source": {
+          "page": 33,
+          "quote": "MCP3004/3008"
+        },
+        "status": "inferred",
+        "nom": 5.4
+      }
+    }
+  },
+  "pins": [
+    {
+      "number": "1",
+      "name": "CH0",
+      "electrical_type": "input",
+      "source": {
+        "page": 15,
+        "quote": "1 CH0 Analog Input"
+      },
+      "status": "extracted",
+      "group": "CH0"
+    },
+    {
+      "number": "2",
+      "name": "CH1",
+      "electrical_type": "input",
+      "source": {
+        "page": 15,
+        "quote": "2 CH1 Analog Input"
+      },
+      "status": "extracted",
+      "group": "CH1"
+    },
+    {
+      "number": "3",
+      "name": "CH2",
+      "electrical_type": "input",
+      "source": {
+        "page": 15,
+        "quote": "3 CH2 Analog Input"
+      },
+      "status": "extracted",
+      "group": "CH2"
+    },
+    {
+      "number": "4",
+      "name": "CH3",
+      "electrical_type": "input",
+      "source": {
+        "page": 15,
+        "quote": "4 CH3 Analog Input"
+      },
+      "status": "extracted",
+      "group": "CH3"
+    },
+    {
+      "number": "5",
+      "name": "CH4",
+      "electrical_type": "input",
+      "source": {
+        "page": 15,
+        "quote": "5 CH4 Analog Input"
+      },
+      "status": "extracted",
+      "group": "CH4"
+    },
+    {
+      "number": "6",
+      "name": "CH5",
+      "electrical_type": "input",
+      "source": {
+        "page": 15,
+        "quote": "6 CH5 Analog Input"
+      },
+      "status": "extracted",
+      "group": "CH5"
+    },
+    {
+      "number": "7",
+      "name": "CH6",
+      "electrical_type": "input",
+      "source": {
+        "page": 15,
+        "quote": "7 CH6 Analog Input"
+      },
+      "status": "extracted",
+      "group": "CH6"
+    },
+    {
+      "number": "8",
+      "name": "CH7",
+      "electrical_type": "input",
+      "source": {
+        "page": 15,
+        "quote": "8 CH7 Analog Input"
+      },
+      "status": "extracted",
+      "group": "CH7"
+    },
+    {
+      "number": "9",
+      "name": "DGND",
+      "electrical_type": "power_in",
+      "source": {
+        "page": 15,
+        "quote": "9 DGND Digital Ground"
+      },
+      "status": "inferred",
+      "group": "power"
+    },
+    {
+      "number": "10",
+      "name": "CS/SHDN",
+      "electrical_type": "input",
+      "source": {
+        "page": 15,
+        "quote": "10 CS/SHDN Chip Select/Shutdown Input"
+      },
+      "status": "extracted"
+    },
+    {
+      "number": "11",
+      "name": "DIN",
+      "electrical_type": "input",
+      "source": {
+        "page": 15,
+        "quote": "11 DIN Serial Data In"
+      },
+      "status": "extracted"
+    },
+    {
+      "number": "12",
+      "name": "DOUT",
+      "electrical_type": "tri_state",
+      "source": {
+        "page": 15,
+        "quote": "12 DOUT Serial Data Out"
+      },
+      "status": "inferred"
+    },
+    {
+      "number": "13",
+      "name": "CLK",
+      "electrical_type": "input",
+      "source": {
+        "page": 15,
+        "quote": "13 CLK Serial Clock"
+      },
+      "status": "inferred"
+    },
+    {
+      "number": "14",
+      "name": "AGND",
+      "electrical_type": "power_in",
+      "source": {
+        "page": 15,
+        "quote": "14 AGND Analog Ground"
+      },
+      "status": "inferred",
+      "group": "power"
+    },
+    {
+      "number": "15",
+      "name": "VREF",
+      "electrical_type": "passive",
+      "source": {
+        "page": 15,
+        "quote": "15 VREF Reference Voltage Input"
+      },
+      "status": "inferred"
+    },
+    {
+      "number": "16",
+      "name": "VDD",
+      "electrical_type": "power_in",
+      "source": {
+        "page": 15,
+        "quote": "16 VDD +2.7V to 5.5V Power Supply"
+      },
+      "status": "inferred",
+      "group": "power"
+    }
+  ]
+}
