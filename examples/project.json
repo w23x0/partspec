@@ -1,0 +1,10 @@
+{
+  "schema": "partspec.project/v1",
+  "name": "Invented power stage — evidence and circuit handoff",
+  "parts": [
+    {"id": "regulator", "spec_path": "skills/partspec/example.json"}
+  ],
+  "circuits": [
+    {"id": "power-stage", "import_path": "examples/circuit-import.json"}
+  ]
+}

@@ -6,6 +6,7 @@ agent gets every structural error in one pass.
 
 from __future__ import annotations
 
+import math
 from typing import Any
 
 from kicad_partspec.findings import FAIL, Finding
@@ -42,7 +43,15 @@ class _Collector:
         if isinstance(value, bool) or not isinstance(value, (int, float)):
             self.error(f"{path}.{key}", f"{path}.{key} must be a number or null", "number", value)
             return None
-        return float(value)
+        try:
+            number = float(value)
+        except OverflowError:
+            number = math.inf
+        if not math.isfinite(number):
+            actual = str(value) if isinstance(value, float) else "integer outside the finite float range"
+            self.error(f"{path}.{key}", f"{path}.{key} must be a finite number", "finite number", actual)
+            return None
+        return number
 
 
 def _source(c: _Collector, parent: dict[str, Any], path: str) -> Source | None:

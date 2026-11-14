@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Invented example. C2 is deliberately not fitted; this is not a fabricated/tested circuit. -->
+<export version="E">
+  <components>
+    <comp ref="U1"><value>XMPL-4</value><footprint>Example:XMPL-4</footprint></comp>
+    <comp ref="R1"><value>10k</value><footprint>Example:R</footprint></comp>
+    <comp ref="C1"><value>22uF</value><footprint>Example:C</footprint></comp>
+    <comp ref="C2"><value>22uF</value><footprint>Example:C</footprint><property name="dnp"/></comp>
+  </components>
+  <nets>
+    <net code="1" name="VIN"><node ref="U1" pin="1"/><node ref="R1" pin="1"/></net>
+    <net code="2" name="GND"><node ref="U1" pin="2"/><node ref="C1" pin="2"/><node ref="C2" pin="2"/></net>
+    <net code="3" name="EN"><node ref="U1" pin="3"/><node ref="R1" pin="2"/></net>
+    <net code="4" name="VOUT"><node ref="U1" pin="4"/><node ref="C1" pin="1"/><node ref="C2" pin="1"/></net>
+  </nets>
+</export>

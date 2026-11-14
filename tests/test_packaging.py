@@ -51,19 +51,16 @@ def test_dependencies_stay_optional():
     assert "mcp" in PROJECT["optional-dependencies"]
 
 
-def test_plugin_mcp_config_launches_a_command_the_package_really_provides():
+def test_plugin_mcp_config_launches_the_checkout_with_declared_extras():
     import json
 
     config = json.loads((ROOT / ".mcp.json").read_text(encoding="utf-8"))["mcpServers"]
     (server,) = config.values()
-    assert server["command"] == "uvx"
+    assert server["command"] == "uv"
     args = server["args"]
-    requirement, command = args[args.index("--from") + 1], args[-1]
-    assert command in PROJECT["scripts"]  # a console script defined in pyproject.toml
-    assert requirement.startswith(f"{PROJECT['name']}[mcp]")
-    # the pinned range must admit the version this repository is at, or the plugin would fetch a mismatched package
-    lower = re.search(r">=(\d+\.\d+\.\d+)", requirement).group(1)
-    assert tuple(map(int, lower.split("."))) <= tuple(map(int, PROJECT["version"].split(".")))
-    upper = re.search(r"<(\d+\.\d+(?:\.\d+)?)", requirement).group(1)
-    padded = tuple(map(int, upper.split("."))) + (0,) * (3 - len(upper.split(".")))
-    assert tuple(map(int, PROJECT["version"].split("."))) < padded
+    assert args[0] == "run"
+    assert args[args.index("--project") + 1] == "${CLAUDE_PLUGIN_ROOT}"
+    assert args[-1] in PROJECT["scripts"]
+    extras = {args[index + 1] for index, value in enumerate(args) if value == "--extra"}
+    assert extras == {"mcp", "pdf"}
+    assert extras <= PROJECT["optional-dependencies"].keys()

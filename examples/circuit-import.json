@@ -1,0 +1,15 @@
+{
+  "schema": "partspec.circuit-import/v1",
+  "netlist_path": "examples/circuit.net",
+  "bindings": {
+    "U1": {"spec_path": "skills/partspec/example.json", "expected_footprint": "Example:XMPL-4"},
+    "R1": {"kind": "resistor"},
+    "C1": {"kind": "capacitor", "tolerance": 0.2, "rated_voltage_v": 16},
+    "C2": {"kind": "capacitor", "tolerance": 0.2, "rated_voltage_v": 16}
+  },
+  "requirements": [
+    {"id": "output-capacitance", "kind": "capacitance_between", "nets": ["VOUT", "GND"], "min_f": 0.000022},
+    {"id": "supply-return", "kind": "separate_nets", "pins": ["U1.1", "U1.2"]},
+    {"id": "c1-voltage", "kind": "voltage_rating", "ref": "C1", "min_v": 10}
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "schema": "partspec.batch/v1",
+  "jobs": [
+    {"id": "invented-part", "spec_path": "skills/partspec/example.json"}
+  ]
+}

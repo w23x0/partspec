@@ -1,7 +1,7 @@
 [project]
 name = "kicad-partspec"
 version = "0.0.1"
-description = "Datasheet-derived PartSpec to verified KiCad symbols and footprints."
+description = "Traceable electronics project bundles: datasheet evidence, KiCad parts, review, BOM and circuit requirements."
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
@@ -29,6 +29,7 @@ Issues = "https://github.com/w23x0/kicad-partspec/issues"
 
 [project.optional-dependencies]
 mcp = ["mcp>=2.1"]
+pdf = ["Pillow>=10"]
 dev = [
     "mcp>=2.1",
     "pytest>=8",
