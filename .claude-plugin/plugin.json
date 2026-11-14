@@ -1,7 +1,7 @@
 {
   "name": "kicad-partspec",
   "version": "0.0.1",
-  "description": "Datasheet to verified KiCad symbols and footprints: a skill for extracting a PartSpec and an MCP server that builds and checks the KiCad files.",
+  "description": "Deliver traceable electronics project bundles: datasheet evidence, attributed review, KiCad parts, circuit requirements, BOM and library tables.",
   "license": "MIT",
   "author": {
     "name": "W23x"

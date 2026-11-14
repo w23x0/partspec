@@ -55,16 +55,24 @@ def test_server_info_reports_the_package_version(workspace):
     assert info.version == __version__
 
 
-def test_three_tools_with_honest_annotations(workspace):
+def test_tools_with_honest_annotations(workspace):
     async def calls(session):
         return (await session.list_tools()).tools
 
     tools = {tool.name: tool for tool in _run(workspace, calls)}
-    assert set(tools) == {"partspec_validate", "partspec_build", "partspec_verify"}
+    assert set(tools) == {
+        "partspec_validate", "partspec_build", "partspec_verify", "partspec_prepare", "partspec_read_pages",
+        "partspec_review", "partspec_batch", "partspec_circuit_check", "partspec_circuit_import", "partspec_project",
+    }
     assert tools["partspec_validate"].annotations.read_only_hint is True
     assert tools["partspec_verify"].annotations.read_only_hint is True
     assert tools["partspec_build"].annotations.read_only_hint is False
     assert tools["partspec_build"].annotations.destructive_hint is False
+    assert tools["partspec_circuit_check"].annotations.read_only_hint is True
+    for name in ("partspec_prepare", "partspec_read_pages", "partspec_review", "partspec_batch", "partspec_circuit_import", "partspec_project"):
+        assert tools[name].annotations.read_only_hint is False
+        assert tools[name].annotations.destructive_hint is False
+        assert tools[name].annotations.idempotent_hint is False
 
 
 def test_validate_concise_and_detailed(workspace):
